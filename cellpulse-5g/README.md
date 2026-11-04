@@ -1,5 +1,4 @@
 # CellPulse 5G - High-Precision Cellular Coverage Analytics Platform
-# CellPulse 5G - High-Precision Cellular Coverage Analytics Platform
 
 > **Live Demo:** [https://proud-field-073a24510.4.azurestaticapps.net](https://proud-field-073a24510.4.azurestaticapps.net)
 
