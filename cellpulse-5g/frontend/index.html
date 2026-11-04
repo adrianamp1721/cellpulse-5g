@@ -256,6 +256,35 @@
       // Notificación de confirmación
       alert("¡Suscripción de prueba (7 días) activada exitosamente!\n\nSe ha enviado un correo de confirmación con la API Key Pro de prueba a tu cuenta.\n\nSe han desbloqueado 6 nuevas torres de cobertura 5G en Bogotá.");
     }
-  </script>
+
+    //
+    function downloadQoSReport() {
+      const data = {
+      platform: "CellPulse 5G B2B",
+      timestamp: new Date().toISOString(),
+      region: "Bogotá, D.C.",
+      metrics: {
+        active_towers: 9,
+        blind_spots_detected: 2,
+        avg_latency_ms: 18.4,
+        coverage_score: "94.2%"
+    },
+      blind_spots: [
+        { id: "BS-01", location: "Ciudad Bolívar", lat: 4.5800, lng: -74.1500, signal_dbm: -115 },
+        { id: "BS-02", location: "Kennedy Central", lat: 4.6350, lng: -74.1350, signal_dbm: -108 }
+      ]
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'cellpulse_qos_report.json';
+    a.click();
+    URL.revokeObjectURL(url);
+
+    alert("Reporte de Telemetría B2B descargado en formato JSON.\n\nConsumo simulado vía API REST para Operadores.");
+    }
+    </script>
 </body>
 </html>
