@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cellpulse-frontend-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: cellpulse-frontend
+  template:
+    metadata:
+      labels:
+        app: cellpulse-frontend
+    spec:
+      containers:
+      - name: cellpulse-frontend
+        image: cellpulse-frontend:latest
+        ports:
+        - containerPort: 80

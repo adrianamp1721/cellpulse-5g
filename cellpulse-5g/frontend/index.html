@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CellPulse 5G | Coverage Analytics Platform</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #0b0f19; color: #fff; }
+    header { background: #151c2c; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00f0ff; }
+    h1 { margin: 0; font-size: 1.5rem; color: #00f0ff; }
+    .badge { background: #7000ff; color: #fff; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+    #map { height: calc(100vh - 70px); width: 100%; }
+    .pricing-panel { position: absolute; top: 80px; right: 20px; z-index: 1000; background: rgba(21, 28, 44, 0.95); padding: 1rem; border-radius: 8px; border: 1px solid #00f0ff; max-width: 250px; }
+    .pricing-panel h3 { margin-top: 0; color: #00f0ff; font-size: 1rem; }
+    .btn-buy { background: #00f0ff; color: #000; font-weight: bold; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 0.5rem; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>CellPulse 5G</h1>
+    <span class="badge">B2B SaaS Platform</span>
+  </header>
+
+  <div class="pricing-panel">
+    <h3>Suscripción Empresarial</h3>
+    <p style="font-size: 0.85rem; color: #94a3b8;">Acceso a la API de mapas de cobertura y reporte de puntos ciegos en tiempo real.</p>
+    <button class="btn-buy" onclick="alert('Redirigiendo a Pasarela de Pagos API B2B...')">Adquirir API Pro</button>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([4.6097, -74.0817], 12);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; CellPulse 5G Coverage Map'
+    }).addTo(map);
+
+    const towers = [
+      { lat: 4.6100, lng: -74.0820, type: "Torre 5G - Claro", signal: "Excelente (-65 dBm)" },
+      { lat: 4.6200, lng: -74.0700, type: "Torre 4G LTE - Tigo", signal: "Buena (-80 dBm)" },
+      { lat: 4.5950, lng: -74.0900, type: "Torre 5G - Movistar", signal: "Excelente (-60 dBm)" }
+    ];
+
+    towers.forEach(t => {
+      L.marker([t.lat, t.lng]).addTo(map)
+        .bindPopup(`<b>${t.type}</b><br>Calidad de Señal: ${t.signal}<br><small>Status: Monitorea por CellPulse API</small>`);
+    });
+  </script>
+</body>
+</html>
