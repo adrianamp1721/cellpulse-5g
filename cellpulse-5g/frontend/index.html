@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CellPulse 5G - Interactive Coverage Map</title>
+  <title>CellPulse 5G - Interactive Coverage & Radiation Map</title>
   
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -174,7 +174,7 @@
   <!-- Tarjeta lateral flotante -->
   <div class="pricing-card">
     <h4>Suscripción Empresarial</h4>
-    <p>Acceso a la API de mapas de cobertura y reporte de puntos ciegos en tiempo real.</p>
+    <p>Acceso a la API de mapas de cobertura, radiación EIRP y reporte de puntos ciegos.</p>
     <button onclick="subscribeAPI()" class="btn-pro">Adquirir API Pro</button>
     
     <!-- Botón de Exportar API QoS a PDF -->
@@ -190,7 +190,7 @@
   <div id="subscriptionModal" class="modal-overlay">
     <div class="modal-content">
       <h3>Prueba Gratuita API Pro (7 Días)</h3>
-      <p>Ingresa tus datos básicos para desbloquear la densidad completa de torres 5G en Bogotá:</p>
+      <p>Ingresa tus datos básicos para desbloquear la densidad completa de torres 5G y zonas de radiación en Bogotá:</p>
       <form id="trialForm" onsubmit="handleTrialSubmit(event)">
         <div class="form-group">
           <label>Nombre completo:</label>
@@ -220,23 +220,39 @@
       attribution: 'Tiles &copy; Esri &mdash; CellPulse 5G Coverage Map'
     }).addTo(map);
 
-    // 2. Antenas iniciales (Modo Gratuito Básico)
+    // 2. Antenas iniciales (Modo Gratuito Básico) + Círculos de Radiación
     var baseMarkers = [
-      L.marker([4.6097, -74.0817]).bindPopup('<b>Torre CP-01 (Centro)</b><br>Estado: Operativa 5G'),
-      L.marker([4.6280, -74.0650]).bindPopup('<b>Torre CP-02 (Chapinero)</b><br>Estado: Operativa 4G/5G'),
-      L.marker([4.5980, -74.0760]).bindPopup('<b>Torre CP-03 (La Candelaria)</b><br>Estado: Mantenimiento')
+      L.marker([4.6097, -74.0817]).bindPopup('<b>Torre CP-01 (Centro)</b><br>Estado: Operativa 5G<br>Radiación: 62 dBm (1.5 kW)'),
+      L.marker([4.6280, -74.0650]).bindPopup('<b>Torre CP-02 (Chapinero)</b><br>Estado: Operativa 4G/5G<br>Radiación: 58 dBm (630 W)'),
+      L.marker([4.5980, -74.0760]).bindPopup('<b>Torre CP-03 (La Candelaria)</b><br>Estado: Mantenimiento<br>Radiación: 45 dBm (31 W)')
+    ];
+
+    var baseCircles = [
+      L.circle([4.6097, -74.0817], { color: '#00f2fe', fillColor: '#00f2fe', fillOpacity: 0.15, radius: 1200 }),
+      L.circle([4.6280, -74.0650], { color: '#00f2fe', fillColor: '#00f2fe', fillOpacity: 0.15, radius: 1500 }),
+      L.circle([4.5980, -74.0760], { color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15, radius: 800 })
     ];
 
     baseMarkers.forEach(function(m) { m.addTo(map); });
+    baseCircles.forEach(function(c) { c.addTo(map); });
 
-    // 3. Antenas Premium en Bogotá (Se desbloquean tras llenar el formulario)
+    // 3. Antenas Premium PRO en Bogotá (Se desbloquean tras llenar el formulario)
     var premiumMarkers = [
-      L.marker([4.6580, -74.0930]).bindPopup('<b>Torre CP-04 (Engativá)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b>'),
-      L.marker([4.6970, -74.0320]).bindPopup('<b>Torre CP-05 (Usaquén)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b>'),
-      L.marker([4.6350, -74.1350]).bindPopup('<b>Torre CP-06 (Kennedy)</b><br>Estado: Alerta Cobertura <b style="color:#00f2fe;">[PRO]</b>'),
-      L.marker([4.5800, -74.1500]).bindPopup('<b>Torre CP-07 (Ciudad Bolívar)</b><br>Estado: Punto Ciego <b style="color:#00f2fe;">[PRO]</b>'),
-      L.marker([4.6750, -74.0480]).bindPopup('<b>Torre CP-08 (Suba)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b>'),
-      L.marker([4.6480, -74.1080]).bindPopup('<b>Torre CP-09 (Fontibón)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b>')
+      L.marker([4.6580, -74.0930]).bindPopup('<b>Torre CP-04 (Engativá)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 64 dBm (2.5 kW)'),
+      L.marker([4.6970, -74.0320]).bindPopup('<b>Torre CP-05 (Usaquén)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 60 dBm (1.0 kW)'),
+      L.marker([4.6350, -74.1350]).bindPopup('<b>Torre CP-06 (Kennedy)</b><br>Estado: Alerta Cobertura <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 50 dBm (100 W)'),
+      L.marker([4.5800, -74.1500]).bindPopup('<b>Torre CP-07 (Ciudad Bolívar)</b><br>Estado: Punto Ciego <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 40 dBm (10 W)'),
+      L.marker([4.6750, -74.0480]).bindPopup('<b>Torre CP-08 (Suba)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 62 dBm (1.5 kW)'),
+      L.marker([4.6480, -74.1080]).bindPopup('<b>Torre CP-09 (Fontibón)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 58 dBm (630 W)')
+    ];
+
+    var premiumCircles = [
+      L.circle([4.6580, -74.0930], { color: '#7c3aed', fillColor: '#7c3aed', fillOpacity: 0.15, radius: 2000 }),
+      L.circle([4.6970, -74.0320], { color: '#7c3aed', fillColor: '#7c3aed', fillOpacity: 0.15, radius: 1800 }),
+      L.circle([4.6350, -74.1350], { color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.20, radius: 1000 }),
+      L.circle([4.5800, -74.1500], { color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.25, radius: 600 }),
+      L.circle([4.6750, -74.0480], { color: '#7c3aed', fillColor: '#7c3aed', fillOpacity: 0.15, radius: 1700 }),
+      L.circle([4.6480, -74.1080], { color: '#7c3aed', fillColor: '#7c3aed', fillOpacity: 0.15, radius: 1400 })
     ];
 
     // 4. Lógica del Modal y Formulario de Suscripción
@@ -252,17 +268,18 @@
       event.preventDefault();
       closeModal();
 
-      // Renderizar antenas adicionales en Bogotá
+      // Renderizar antenas y círculos de radiación adicionales en Bogotá
       premiumMarkers.forEach(function(m) { m.addTo(map); });
+      premiumCircles.forEach(function(c) { c.addTo(map); });
 
       // Ajustar encuadre de la vista
       map.flyTo([4.640, -74.080], 12);
 
       // Notificación al usuario
-      alert("¡Suscripción de prueba (7 días) activada exitosamente!\n\nSe ha enviado un correo de confirmación con la API Key Pro de prueba a tu cuenta.\n\nSe han desbloqueado 6 nuevas torres de cobertura 5G en Bogotá.");
+      alert("¡Suscripción de prueba (7 días) activada exitosamente!\n\nSe ha enviado un correo de confirmación con la API Key Pro de prueba a tu cuenta.\n\nSe han desbloqueado 6 nuevas torres de cobertura 5G y sus huellas de radiación EIRP en Bogotá.");
     }
 
-    // 5. Simulación API B2B: Generación y descarga de Informe en formato PDF
+    // 5. Simulación API B2B: Generación e impresión del Informe PDF con Inventario de Radiación
     function downloadQoSReport() {
       const now = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
 
@@ -275,7 +292,7 @@
           <meta charset="UTF-8">
           <title>Informe_Telemetria_CellPulse5G_QoS</title>
           <style>
-            body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; line-height: 1.6; }
+            body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
             .header { border-bottom: 3px solid #00f2fe; padding-bottom: 15px; margin-bottom: 25px; }
             .logo { font-size: 24px; font-weight: bold; color: #0f172a; }
             .sub { font-size: 14px; color: #64748b; }
@@ -283,11 +300,15 @@
             .metric-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
             .alert-box { background: #fef2f2; border-left: 4px solid #ef4444; padding: 10px 15px; margin-bottom: 10px; }
             .footer { margin-top: 40px; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+            th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+            th { background: #0284c7; color: white; }
+            tr:nth-child(even) { background: #f8fafc; }
           </style>
         </head>
         <body>
           <div class="header">
-            <div class="logo">CELLPULSE 5G - Enterprise Telemetry Report</div>
+            <div class="logo">CELLPULSE 5G - Enterprise Telemetry & Radiation Report</div>
             <div class="sub">Plataforma Cloud-Native B2B SaaS | Generado: ${now}</div>
           </div>
 
@@ -296,24 +317,96 @@
             <p><strong>Región de Cobertura:</strong> Bogotá, D.C. - Colombia</p>
             <p><strong>Disponibilidad de Servicio (SLA):</strong> 99.9% Garantizado</p>
             <p><strong>Cobertura Promedio General:</strong> 94.2%</p>
-            <p><strong>Torres 5G/4G Activas:</strong> 9 Nodos Operativos</p>
+            <p><strong>Torres 5G/4G Registradas:</strong> 9 Nodos Monitoreados</p>
             <p><strong>Latencia Promedio (RTT):</strong> 18.4 ms</p>
             <p><strong>Tráfico Telemétrico (24h):</strong> 4.8 TB</p>
           </div>
 
-          <h2>2. Puntos Ciegos Detectados</h2>
+          <h2>2. Inventario de Antenas y Potencia de Radiación (EIRP)</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>ID Antena</th>
+                <th>Ubicación / Sector</th>
+                <th>Coordenadas</th>
+                <th>Frecuencia</th>
+                <th>Potencia Radiada (EIRP)</th>
+                <th>Radio Cobertura</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><b>CP-01</b></td>
+                <td>Centro Histórico</td>
+                <td>4.6097, -74.0817</td>
+                <td>3.5 GHz (n78)</td>
+                <td>62 dBm (1.5 kW)</td>
+                <td>1.2 km</td>
+              </tr>
+              <tr>
+                <td><b>CP-02</b></td>
+                <td>Chapinero Alto</td>
+                <td>4.6280, -74.0650</td>
+                <td>3.5 GHz / 700 MHz</td>
+                <td>58 dBm (630 W)</td>
+                <td>1.5 km</td>
+              </tr>
+              <tr>
+                <td><b>CP-03</b></td>
+                <td>La Candelaria</td>
+                <td>4.5980, -74.0760</td>
+                <td>2.6 GHz (4G)</td>
+                <td>45 dBm (31 W)</td>
+                <td>800 m</td>
+              </tr>
+              <tr>
+                <td><b>CP-04 [PRO]</b></td>
+                <td>Engativá Calle 80</td>
+                <td>4.6580, -74.0930</td>
+                <td>3.5 GHz (n78)</td>
+                <td>64 dBm (2.5 kW)</td>
+                <td>2.0 km</td>
+              </tr>
+              <tr>
+                <td><b>CP-05 [PRO]</b></td>
+                <td>Usaquén Santa Bárbara</td>
+                <td>4.6970, -74.0320</td>
+                <td>3.5 GHz (n78)</td>
+                <td>60 dBm (1.0 kW)</td>
+                <td>1.8 km</td>
+              </tr>
+              <tr>
+                <td><b>CP-06 [PRO]</b></td>
+                <td>Kennedy Central</td>
+                <td>4.6350, -74.1350</td>
+                <td>3.5 GHz (n78)</td>
+                <td>50 dBm (100 W)</td>
+                <td>1.0 km</td>
+              </tr>
+              <tr>
+                <td><b>CP-07 [PRO]</b></td>
+                <td>Ciudad Bolívar</td>
+                <td>4.5800, -74.1500</td>
+                <td>700 MHz (n28)</td>
+                <td>40 dBm (10 W)</td>
+                <td>600 m</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>3. Puntos Ciegos Detectados</h2>
           <div class="alert-box">
             <strong>[ALERTA BS-01] Sector Ciudad Bolívar (Lat: 4.5800, Lng: -74.1500)</strong><br>
-            Nivel RSSI: -115 dBm (Cobertura Crítica / Pérdida de paquetes). Acción: Priorizado para celda Micro-5G.
+            Nivel RSSI: -115 dBm (Cobertura Crítica / Pérdida de paquetes). Potencia de celda insuficiente para la topografía del sector.
           </div>
           <div class="alert-box">
             <strong>[ALERTA BS-02] Sector Kennedy Central (Lat: 4.6350, Lng: -74.1350)</strong><br>
-            Nivel RSSI: -108 dBm (Degradación en horas pico). Acción: Ajuste de inclinación en antena CP-06.
+            Nivel RSSI: -108 dBm (Degradación en horas pico). Recomendación: Incrementar azimut y EIRP +3 dBm.
           </div>
 
-          <h2>3. Continuidad en Rutas Críticas de IoT</h2>
+          <h2>4. Continuidad en Rutas Críticas de IoT</h2>
           <div class="metric-box">
-            <p><strong>Ruta Logística #01 (Corredor Calle 80):</strong> 99.1% Continuidad de señal 5G asegurada.</p>
+            <p><strong>Ruta Logística #01 (Corredor Calle 80):</strong> 99.1% Continuidad de señal 5G asegurada mediante celdas CP-02, CP-04 y CP-05.</p>
           </div>
 
           <div class="footer">
