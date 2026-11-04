@@ -3,52 +3,259 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CellPulse 5G | Coverage Analytics Platform</title>
+  <title>CellPulse 5G - Interactive Coverage Map</title>
+  
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
   <style>
-    body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: #0b0f19; color: #fff; }
-    header { background: #151c2c; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #00f0ff; }
-    h1 { margin: 0; font-size: 1.5rem; color: #00f0ff; }
-    .badge { background: #7000ff; color: #fff; padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-    #map { height: calc(100vh - 70px); width: 100%; }
-    .pricing-panel { position: absolute; top: 80px; right: 20px; z-index: 1000; background: rgba(21, 28, 44, 0.95); padding: 1rem; border-radius: 8px; border: 1px solid #00f0ff; max-width: 250px; }
-    .pricing-panel h3 { margin-top: 0; color: #00f0ff; font-size: 1rem; }
-    .btn-buy { background: #00f0ff; color: #000; font-weight: bold; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; width: 100%; margin-top: 0.5rem; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body, html {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #0f172a;
+      color: #f8fafc;
+      overflow: hidden;
+    }
+    header {
+      height: 60px;
+      background: #1e293b;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      border-bottom: 2px solid #00f2fe;
+      z-index: 1000;
+      position: relative;
+    }
+    .logo {
+      font-size: 20px;
+      font-weight: bold;
+      color: #00f2fe;
+    }
+    .badge {
+      background: #7c3aed;
+      color: #fff;
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    #map {
+      width: 100%;
+      height: calc(100vh - 60px);
+    }
+    /* Panel lateral flotante */
+    .pricing-card {
+      position: absolute;
+      top: 80px;
+      right: 20px;
+      width: 280px;
+      background: rgba(30, 41, 59, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      z-index: 1000;
+    }
+    .pricing-card h4 {
+      color: #00f2fe;
+      margin-bottom: 8px;
+    }
+    .pricing-card p {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    .btn-pro {
+      width: 100%;
+      background: #00f2fe;
+      color: #0f172a;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-pro:hover {
+      background: #38ef7d;
+    }
+    /* Modal de Suscripción */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #1e293b;
+      color: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 420px;
+      border: 1px solid #334155;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .modal-content h3 {
+      color: #00f2fe;
+      margin-bottom: 8px;
+    }
+    .modal-content p {
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 16px;
+    }
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 4px;
+      color: #cbd5e1;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #475569;
+      background: #0f172a;
+      color: #fff;
+      font-size: 14px;
+    }
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .btn-cancel {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      background: #475569;
+      color: #fff;
+      cursor: pointer;
+    }
+    .btn-submit {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      background: #00f2fe;
+      color: #0f172a;
+      font-weight: bold;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>CellPulse 5G</h1>
-    <span class="badge">B2B SaaS Platform</span>
+    <div class="logo">CellPulse 5G</div>
+    <div class="badge">B2B SaaS Platform</div>
   </header>
 
-  <div class="pricing-panel">
-    <h3>Suscripción Empresarial</h3>
-    <p style="font-size: 0.85rem; color: #94a3b8;">Acceso a la API de mapas de cobertura y reporte de puntos ciegos en tiempo real.</p>
-    <button class="btn-buy" onclick="alert('Redirigiendo a Pasarela de Pagos API B2B...')">Adquirir API Pro</button>
+  <!-- Tarjeta lateral -->
+  <div class="pricing-card">
+    <h4>Suscripción Empresarial</h4>
+    <p>Acceso a la API de mapas de cobertura y reporte de puntos ciegos en tiempo real.</p>
+    <button onclick="subscribeAPI()" class="btn-pro">Adquirir API Pro</button>
   </div>
 
+  <!-- Contenedor del Mapa -->
   <div id="map"></div>
 
+  <!-- Modal Formulario 7 Días -->
+  <div id="subscriptionModal" class="modal-overlay">
+    <div class="modal-content">
+      <h3>Prueba Gratuita API Pro (7 Días)</h3>
+      <p>Ingresa tus datos básicos para desbloquear la densidad completa de torres 5G en Bogotá:</p>
+      <form id="trialForm" onsubmit="handleTrialSubmit(event)">
+        <div class="form-group">
+          <label>Nombre completo:</label>
+          <input type="text" required placeholder="Ej. Ana Gómez">
+        </div>
+        <div class="form-group">
+          <label>Correo electrónico:</label>
+          <input type="email" required placeholder="ana@empresa.com">
+        </div>
+        <div class="form-actions">
+          <button type="button" onclick="closeModal()" class="btn-cancel">Cancelar</button>
+          <button type="submit" class="btn-submit">Activar 7 Días</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  
   <script>
-    const map = L.map('map').setView([4.6097, -74.0817], 12);
+    // 1. Inicialización del Mapa centrado en Bogotá
+    var map = L.map('map').setView([4.635, -74.082], 12);
 
+    // Servidor GIS libre de Esri (sin API key requerida)
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-  attribution: 'Tiles &copy; Esri &mdash; Source: Esri, DeLorme, NAVTEQ, USGS, Intermap, iPC, NRCAN, Esri Japan, METI, Esri China (Hong Kong), Esri (Thailand), TomTom, 2012'
-}).addTo(map);
+      attribution: 'Tiles &copy; Esri &mdash; CellPulse 5G Coverage Map'
+    }).addTo(map);
 
-    const towers = [
-      { lat: 4.6100, lng: -74.0820, type: "Torre 5G - Claro", signal: "Excelente (-65 dBm)" },
-      { lat: 4.6200, lng: -74.0700, type: "Torre 4G LTE - Tigo", signal: "Buena (-80 dBm)" },
-      { lat: 4.5950, lng: -74.0900, type: "Torre 5G - Movistar", signal: "Excelente (-60 dBm)" }
+    // 2. Antenas iniciales (Modo Gratuito Básico)
+    var baseMarkers = [
+      L.marker([4.6097, -74.0817]).bindPopup('<b>Torre CP-01 (Centro)</b><br>Estado: Operativa 5G'),
+      L.marker([4.6280, -74.0650]).bindPopup('<b>Torre CP-02 (Chapinero)</b><br>Estado: Operativa 4G/5G'),
+      L.marker([4.5980, -74.0760]).bindPopup('<b>Torre CP-03 (La Candelaria)</b><br>Estado: Mantenimiento')
     ];
 
-    towers.forEach(t => {
-      L.marker([t.lat, t.lng]).addTo(map)
-        .bindPopup(`<b>${t.type}</b><br>Calidad de Señal: ${t.signal}<br><small>Status: Monitorea por CellPulse API</small>`);
-    });
+    baseMarkers.forEach(function(m) { m.addTo(map); });
+
+    // 3. Antenas Premium en Bogotá (Se desbloquean tras llenar el formulario)
+    var premiumMarkers = [
+      L.marker([4.6580, -74.0930]).bindPopup('<b>Torre CP-04 (Engativá)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b>'),
+      L.marker([4.6970, -74.0320]).bindPopup('<b>Torre CP-05 (Usaquén)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b>'),
+      L.marker([4.6350, -74.1350]).bindPopup('<b>Torre CP-06 (Kennedy)</b><br>Estado: Alerta Cobertura <b style="color:#00f2fe;">[PRO]</b>'),
+      L.marker([4.5800, -74.1500]).bindPopup('<b>Torre CP-07 (Ciudad Bolívar)</b><br>Estado: Punto Ciego <b style="color:#00f2fe;">[PRO]</b>'),
+      L.marker([4.6750, -74.0480]).bindPopup('<b>Torre CP-08 (Suba)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b>'),
+      L.marker([4.6480, -74.1080]).bindPopup('<b>Torre CP-09 (Fontibón)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b>')
+    ];
+
+    // 4. Lógica de Interacción
+    function subscribeAPI() {
+      document.getElementById('subscriptionModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('subscriptionModal').style.display = 'none';
+    }
+
+    function handleTrialSubmit(event) {
+      event.preventDefault();
+      closeModal();
+
+      // Renderizar antenas adicionales en el mapa
+      premiumMarkers.forEach(function(m) { m.addTo(map); });
+
+      // Ajustar encuadre de la vista
+      map.flyTo([4.640, -74.080], 12);
+
+      // Notificación de confirmación
+      alert("¡Suscripción de prueba (7 días) activada exitosamente!\n\nSe ha enviado un correo de confirmación con la API Key Pro de prueba a tu cuenta.\n\nSe han desbloqueado 6 nuevas torres de cobertura 5G en Bogotá.");
+    }
   </script>
 </body>
 </html>
