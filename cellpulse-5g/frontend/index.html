@@ -40,11 +40,6 @@
       background: #0b1324;
     }
 
-    /* Estilo oscuro elegante para teselas OpenStreetMap sin necesidad de API Key */
-    .dark-osm-tiles {
-      filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(92%) saturate(85%);
-    }
-
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #090f1d; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
@@ -60,7 +55,7 @@
         width: 100%;
         background: white !important;
         color: #0f172a !important;
-        padding: 20px;
+        padding: 16px;
         z-index: 99999;
       }
       .no-print { display: none !important; }
@@ -69,24 +64,44 @@
 </head>
 <body class="flex flex-col min-h-screen">
 
-  <!-- TOP NAVBAR -->
+  <!-- TOP NAVBAR CON LOGO CORPORATIVO -->
   <header class="bg-[#0a1120] border-b border-slate-800/90 px-4 lg:px-6 py-3 flex flex-wrap items-center justify-between gap-3 z-30">
-    <div class="flex items-center gap-3">
-      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+    <div class="flex items-center gap-3.5">
+      <!-- LOGO OFICIAL CELLPULSE 5G -->
+      <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-slate-900 to-slate-800 border border-sky-500/40 flex items-center justify-center shadow-lg shadow-sky-500/15 shrink-0">
+        <svg class="w-8 h-8" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="cpGrad1" x1="4" y1="4" x2="44" y2="44" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#38BDF8"/>
+              <stop offset="100%" stop-color="#818CF8"/>
+            </linearGradient>
+            <linearGradient id="cpGrad2" x1="12" y1="24" x2="36" y2="24" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#34D399"/>
+              <stop offset="100%" stop-color="#38BDF8"/>
+            </linearGradient>
+          </defs>
+          <!-- Hexágono Exterior -->
+          <path d="M24 3L42 13.5V34.5L24 45L6 34.5V13.5L24 3Z" stroke="url(#cpGrad1)" stroke-width="2.5" fill="#0F172A"/>
+          <!-- Ondas 5G Superiores -->
+          <path d="M16.5 16.5C20.6 12.8 27.4 12.8 31.5 16.5" stroke="#38BDF8" stroke-width="2.2" stroke-linecap="round"/>
+          <path d="M19.8 19.8C22.2 17.7 25.8 17.7 28.2 19.8" stroke="#818CF8" stroke-width="2.2" stroke-linecap="round"/>
+          <!-- Línea de Pulso Telemétrico -->
+          <path d="M12 27H17.5L20.5 21.5L24.5 32.5L27.5 25.5H36" stroke="url(#cpGrad2)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <!-- Nodo Central -->
+          <circle cx="24" cy="36.5" r="2.2" fill="#38BDF8"/>
         </svg>
       </div>
+
       <div>
         <div class="flex items-center gap-2 flex-wrap">
-          <h1 class="text-lg font-extrabold tracking-tight text-white">CellPulse 5G</h1>
+          <h1 class="text-lg font-extrabold tracking-tight text-white">CellPulse <span class="text-sky-400">5G</span></h1>
           <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-sky-500/15 text-sky-400 border border-sky-500/30">
             Enterprise NOC
           </span>
           <span id="subscriber-badge" class="hidden px-2.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
           </span>
         </div>
-        <p class="text-xs text-slate-400">Cobertura Macro-Celular Bogotá D.C. & Telemetría Logística IoT</p>
+        <p class="text-xs text-slate-400">Inteligencia Geoespacial 5G NR & Telemetría Logística • Bogotá D.C.</p>
       </div>
     </div>
 
@@ -101,9 +116,9 @@
       <button id="btn-export-report" type="button"
         class="px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 transition cursor-pointer flex items-center gap-2">
         <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        <span>Informe QoS (PDF)</span>
+        <span>Informe Ejecutivo QoS</span>
       </button>
     </div>
   </header>
@@ -249,6 +264,16 @@
     <section id="map-wrapper" class="flex-1">
       <div id="map"></div>
 
+      <!-- SELECTOR DE MAPA BASE (SIN API KEY) -->
+      <div class="absolute top-4 right-4 z-[1000] bg-[#0a1120]/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-1.5 shadow-xl flex gap-1">
+        <button id="btn-basemap-dark" type="button" class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-sky-600 text-white cursor-pointer transition">
+          Vista NOC Oscura
+        </button>
+        <button id="btn-basemap-streets" type="button" class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition">
+          Calles & Vías
+        </button>
+      </div>
+
       <!-- LEYENDA FLOTANTE -->
       <div class="absolute bottom-5 right-5 z-[1000] bg-[#0a1120]/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3.5 shadow-2xl max-w-xs">
         <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-2">Convenciones Geoespaciales</h3>
@@ -308,7 +333,6 @@
           </button>
         </div>
 
-        <!-- Datos de Contacto -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-[11px] font-semibold text-slate-300 mb-1">Nombre del Responsable *</label>
@@ -332,7 +356,6 @@
           </div>
         </div>
 
-        <!-- Datos de Tarjeta Simulada -->
         <div class="border-t border-slate-800 pt-3">
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-bold text-slate-200">Método de Pago Corporativo (Simulado)</span>
@@ -371,78 +394,101 @@
     </div>
   </div>
 
-  <!-- MODAL / SECCIÓN AMPLIADA PARA INFORME QOS PDF MEMBRETEADO -->
+  <!-- MODAL INFORME EJECUTIVO QOS CON LOGO Y MEMBRETE PROFESIONAL -->
   <div id="report-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[5000] hidden items-center justify-center p-4 no-print">
     <div class="bg-white text-slate-900 rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 sm:p-10">
       <div id="printable-report" class="space-y-6">
 
-        <!-- ENCABEZADO MEMBRETEADO -->
-        <div class="flex flex-wrap justify-between items-start border-b-2 border-slate-800 pb-5 gap-4">
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-slate-900 text-sky-400 flex items-center justify-center font-extrabold text-xl">
-              CP
+        <!-- ENCABEZADO MEMBRETEADO CON LOGO -->
+        <div class="flex flex-wrap justify-between items-start border-b-2 border-slate-900 pb-5 gap-4">
+          <div class="flex items-center gap-3.5">
+            <!-- LOGO OFICIAL CELLPULSE 5G EN EL INFORME -->
+            <div class="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center shadow-md shrink-0">
+              <svg class="w-10 h-10" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M24 3L42 13.5V34.5L24 45L6 34.5V13.5L24 3Z" stroke="#38BDF8" stroke-width="2.5" fill="#0F172A"/>
+                <path d="M16.5 16.5C20.6 12.8 27.4 12.8 31.5 16.5" stroke="#38BDF8" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M19.8 19.8C22.2 17.7 25.8 17.7 28.2 19.8" stroke="#818CF8" stroke-width="2.2" stroke-linecap="round"/>
+                <path d="M12 27H17.5L20.5 21.5L24.5 32.5L27.5 25.5H36" stroke="#34D399" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="24" cy="36.5" r="2.2" fill="#38BDF8"/>
+              </svg>
             </div>
             <div>
-              <span class="text-[11px] font-extrabold uppercase tracking-widest text-sky-700">CellPulse 5G Technologies S.A.S.</span>
-              <h2 class="text-2xl font-extrabold text-slate-900 leading-tight">Dictamen Técnico de Cobertura & Auditoría QoS</h2>
-              <p class="text-xs text-slate-600">Infraestructura Cloud-Native (CNCF) • Telemetría Geoespacial Banda n78 (3.5 GHz)</p>
+              <span class="text-[11px] font-extrabold uppercase tracking-widest text-sky-700">CellPulse 5G Technologies S.A.S. • NIT 901.842.519-4</span>
+              <h2 class="text-2xl font-extrabold text-slate-900 leading-tight">Informe Ejecutivo de Auditoría de Red & QoS</h2>
+              <p class="text-xs text-slate-600">Arquitectura Cloud-Native (CNCF) • Modelado Geoespacial EIRP Banda n78 (3.5 GHz)</p>
             </div>
           </div>
-          <div class="text-right text-xs text-slate-600 font-mono bg-slate-100 p-3 rounded-lg border border-slate-200">
-            <p class="font-bold text-slate-900" id="rep-code">ID: AUD-5G-2026-BOG</p>
-            <p id="rep-date">Fecha: --</p>
-            <p id="rep-client">Cliente: Evaluación Corporativa</p>
+
+          <div class="text-right text-xs text-slate-700 font-mono bg-slate-100 p-3 rounded-xl border border-slate-300">
+            <p class="font-extrabold text-slate-900" id="rep-code">RADICADO: CP5G-AUD-2026</p>
+            <p id="rep-date">Emisión: --</p>
+            <p id="rep-client" class="text-sky-800 font-semibold">Cliente: Evaluación Corporativa</p>
           </div>
         </div>
 
-        <!-- RESUMEN EJECUTIVO DE KPIS -->
+        <!-- SECCIÓN 1: KPIs -->
         <div>
-          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 mb-2.5">1. Indicadores Clave de Desempeño (KPIs de Red)</h3>
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 mb-2.5 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-sky-600"></span> 1. Resumen Ejecutivo de Indicadores de Servicio (SLA & KPIs)
+          </h3>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
               <p class="text-[10px] font-bold text-slate-500 uppercase">Disponibilidad SLA</p>
               <p id="rep-sla" class="text-2xl font-extrabold text-slate-900 mt-1">91.8%</p>
-              <p class="text-[10px] text-slate-500 mt-0.5">Meta B2B: ≥ 99.5%</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Umbral Contractual: ≥ 99.5%</p>
             </div>
             <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
-              <p class="text-[10px] font-bold text-slate-500 uppercase">Nodos Operativos</p>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Topología Activa</p>
               <p id="rep-cells" class="text-2xl font-extrabold text-slate-900 mt-1">5 / 20</p>
               <p class="text-[10px] text-slate-500 mt-0.5">Bogotá D.C. & Sabana</p>
             </div>
             <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
               <p class="text-[10px] font-bold text-slate-500 uppercase">Latencia Media E2E</p>
               <p id="rep-latency" class="text-2xl font-extrabold text-sky-700 mt-1">14.2 ms</p>
-              <p class="text-[10px] text-slate-500 mt-0.5">Perfil URLLC / eMBB</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Estándar 3GPP Rel-16</p>
             </div>
             <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
-              <p class="text-[10px] font-bold text-slate-500 uppercase">Exposición Riesgo/Hr</p>
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Riesgo Operativo / Hr</p>
               <p id="rep-risk" class="text-2xl font-extrabold text-amber-600 mt-1">$2,150 USD</p>
-              <p class="text-[10px] text-slate-500 mt-0.5">Continuidad flotas IoT</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Flotas Carga & IoT</p>
             </div>
           </div>
         </div>
 
-        <!-- ANÁLISIS TÉCNICO PROFUNDO -->
+        <!-- SECCIÓN 2: ANÁLISIS TÉCNICO DETALLADO -->
         <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-800">2. Análisis Técnico de Propagación, Capacidad e Impacto Financiero</h3>
-          <div id="rep-deep-analysis" class="text-xs text-slate-700 leading-relaxed space-y-2">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-sky-600"></span> 2. Análisis Técnico de Propagación Radioeléctrica, Capacidad e Impacto Económico
+          </h3>
+          <div id="rep-deep-analysis" class="text-xs text-slate-700 leading-relaxed space-y-2.5">
           </div>
         </div>
 
-        <!-- TABLA DE INVENTARIO -->
+        <!-- SECCIÓN 3: DIAGNÓSTICO POR CORREDORES ESTRATÉGICOS -->
         <div>
-          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 mb-2">3. Matriz Técnica de Macro-Celdas Activas en Topología</h3>
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 mb-2 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-sky-600"></span> 3. Evaluación Sectorial por Corredores Logísticos (Modelo DIKW)
+          </h3>
+          <div id="rep-corridors-grid" class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+          </div>
+        </div>
+
+        <!-- SECCIÓN 4: TABLA DETALLADA DE NODOS -->
+        <div>
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-900 mb-2 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-sky-600"></span> 4. Inventario Certificado de Macro-Celdas Operativas
+          </h3>
           <div class="overflow-x-auto border border-slate-300 rounded-xl">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-900 text-white font-bold">
                 <tr>
                   <th class="p-2.5">ID</th>
-                  <th class="p-2.5">Estación / Localidad</th>
+                  <th class="p-2.5">Estación Base / Localidad</th>
                   <th class="p-2.5">Nivel</th>
                   <th class="p-2.5">Potencia EIRP</th>
-                  <th class="p-2.5">Radio Efectivo</th>
+                  <th class="p-2.5">Radio</th>
                   <th class="p-2.5">Latencia</th>
-                  <th class="p-2.5">Throughput</th>
+                  <th class="p-2.5">Capacidad</th>
                 </tr>
               </thead>
               <tbody id="rep-table-body" class="divide-y divide-slate-200">
@@ -451,17 +497,22 @@
           </div>
         </div>
 
-        <!-- PIE DE PÁGINA MEMBRETEADO CON DATOS DE CONTACTO -->
-        <footer class="border-t-2 border-slate-800 pt-4 mt-6 flex flex-wrap justify-between items-center gap-4 text-[11px] text-slate-600">
-          <div>
-            <p class="font-extrabold text-slate-900 text-xs">CellPulse 5G — Ingeniería de Redes & Arquitectura Cloud-Native</p>
-            <p>Responsable Técnico: <strong class="text-slate-800">Adriana M.P. & Equipo CellPulse 5G</strong> • Bogotá D.C., Colombia</p>
-            <p>Contacto Corporativo: <span class="font-mono text-sky-800">contacto@cellpulse5g.io</span> | Tel: +57 (601) 742-5890</p>
+        <!-- PIE DE PÁGINA MEMBRETEADO OFICIAL -->
+        <footer class="border-t-2 border-slate-900 pt-4 mt-6 flex flex-wrap justify-between items-center gap-4 text-[11px] text-slate-600 bg-slate-50 p-4 rounded-xl">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-slate-900 text-sky-400 flex items-center justify-center font-extrabold text-sm">
+              CP5G
+            </div>
+            <div>
+              <p class="font-extrabold text-slate-900 text-xs">CellPulse 5G — Dirección de Ingeniería & Arquitectura Cloud</p>
+              <p>Líder de Proyecto: <strong class="text-slate-900">Adriana M.P. & Equipo CellPulse 5G</strong> • Bogotá D.C., Colombia</p>
+              <p>Email: <span class="font-mono text-sky-800">ingenieria@cellpulse5g.io</span> | Línea Corporativa: +57 (601) 742-5890</p>
+            </div>
           </div>
           <div class="text-right font-mono text-[10px]">
-            <p class="text-slate-800 font-bold">Portal Live: proud-field-073a24510.4.azurestaticapps.net</p>
-            <p>Repositorio: github.com/adrianamp1721/cellpulse-5g</p>
-            <p class="text-emerald-700 font-semibold mt-0.5">Documento Certificado • Modelo DIKW Enterprise</p>
+            <p class="text-slate-900 font-bold">Cloud App: proud-field-073a24510.4.azurestaticapps.net</p>
+            <p>GitHub: github.com/adrianamp1721/cellpulse-5g</p>
+            <p class="text-emerald-700 font-bold mt-0.5">Hash Auditoría: SHA256-CP5G-BOG-OK</p>
           </div>
         </footer>
 
@@ -472,7 +523,7 @@
           Cerrar Vista Previa
         </button>
         <button id="btn-print-pdf" type="button" class="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow cursor-pointer">
-          Imprimir / Descargar PDF
+          Imprimir / Guardar PDF Oficial
         </button>
       </div>
     </div>
@@ -528,7 +579,7 @@
       };
 
       // ==========================================
-      // 2. MAPA LEAFLET SIN API KEY (OSM DARK FILTER)
+      // 2. MAPA ESRI ARCGIS (100% LIBRE DE BLOQUEOS Y SIN API KEY)
       // ==========================================
       const map = L.map('map', {
         center: [4.6450, -74.1150],
@@ -536,11 +587,35 @@
         zoomControl: true
       });
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors | CellPulse 5G GIS',
-        maxZoom: 19,
-        className: 'dark-osm-tiles'
-      }).addTo(map);
+      const esriDarkLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ | CellPulse 5G',
+        maxZoom: 16
+      });
+
+      const esriStreetsLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX | CellPulse 5G',
+        maxZoom: 18
+      });
+
+      esriDarkLayer.addTo(map);
+
+      // Botones para alternar entre mapa oscuro y mapa callejero detallado
+      const btnDark = document.getElementById('btn-basemap-dark');
+      const btnStreets = document.getElementById('btn-basemap-streets');
+
+      btnDark.addEventListener('click', () => {
+        if (map.hasLayer(esriStreetsLayer)) map.removeLayer(esriStreetsLayer);
+        esriDarkLayer.addTo(map);
+        btnDark.className = 'px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-sky-600 text-white cursor-pointer transition';
+        btnStreets.className = 'px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition';
+      });
+
+      btnStreets.addEventListener('click', () => {
+        if (map.hasLayer(esriDarkLayer)) map.removeLayer(esriDarkLayer);
+        esriStreetsLayer.addTo(map);
+        btnStreets.className = 'px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-sky-600 text-white cursor-pointer transition';
+        btnDark.className = 'px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer transition';
+      });
 
       setTimeout(() => { map.invalidateSize(); }, 250);
       window.addEventListener('resize', () => map.invalidateSize());
@@ -903,7 +978,6 @@
       document.getElementById('btn-close-checkout').addEventListener('click', closeCheckoutModal);
       document.getElementById('btn-cancel-checkout').addEventListener('click', closeCheckoutModal);
 
-      // Autorrellenar datos de prueba en el checkout
       document.getElementById('btn-autofill-demo').addEventListener('click', () => {
         document.getElementById('chk-name').value = 'Ing. Carlos Andrés Mendoza';
         document.getElementById('chk-company').value = 'Transportes & Logística Sabana S.A.S.';
@@ -985,34 +1059,52 @@
       });
 
       // ==========================================
-      // 7. INFORME QOS AMPLIADO Y MEMBRETEADO
+      // 7. INFORME QOS EJECUTIVO AMPLIADO
       // ==========================================
       const reportModal = document.getElementById('report-modal');
       document.getElementById('btn-export-report').addEventListener('click', () => {
         const activeCells = getActiveCells();
         const totalThroughput = activeCells.reduce((acc, c) => acc + c.throughput, 0);
         const avgLatency = (activeCells.reduce((acc, c) => acc + c.latency, 0) / activeCells.length).toFixed(2);
+        const avgEirp = (activeCells.reduce((acc, c) => acc + parseFloat(c.eirp), 0) / activeCells.length).toFixed(1);
         const isGapCovered = state.proEnabled || state.capexSimulated;
 
         document.getElementById('rep-date').textContent = 'Emisión: ' + new Date().toLocaleString('es-CO');
         document.getElementById('rep-client').textContent = state.subscriber
-          ? `Suscriptor: ${state.subscriber.company} (Tarjeta •••• ${state.subscriber.cardLast4})`
-          : 'Suscriptor: Evaluación Corporativa (Nivel Base)';
+          ? `Cliente: ${state.subscriber.company} (Resp: ${state.subscriber.name})`
+          : 'Cliente: Auditoría Técnica Corporativa (Nivel Base)';
 
         document.getElementById('rep-sla').textContent = document.getElementById('kpi-sla').textContent;
         document.getElementById('rep-cells').textContent = document.getElementById('kpi-cells').textContent;
         document.getElementById('rep-latency').textContent = `${avgLatency} ms`;
         document.getElementById('rep-risk').textContent = document.getElementById('kpi-risk').textContent;
 
-        // Análisis técnico dinámico según estado de red
         document.getElementById('rep-deep-analysis').innerHTML = `
-          <p><strong>• Capacidad Agregada y Densidad Espectral:</strong> La topología actualmente evaluada integra <strong>${activeCells.length} macro-celdas operativas</strong> en banda media 5G NR (3.5 GHz n78), alcanzando un throughput agregado de <strong>${totalThroughput.toLocaleString()} Mbps (${(totalThroughput / 1000).toFixed(2)} Gbps)</strong> con una latencia media extremo a extremo de <strong>${avgLatency} ms</strong>, cumpliendo los umbrales internacionales para telemetría industrial IoT y seguimiento vehicular en tiempo real.</p>
-          <p><strong>• Análisis de Propagación EIRP y Continuidad Geoespacial:</strong> Mediante el modelado de Potencia Radiada Isotrópica Equivalente (entre 61 dBm y 65 dBm), cada nodo sostiene un radio efectivo de cobertura entre 2.9 km y 3.8 km. ${isGapCovered
-            ? 'Con la topología extendida activa, se logra un solapamiento celular continuo desde Chía hasta Soacha y desde Mosquera hasta los Cerros Orientales, eliminando las zonas de sombra orográfica en Ciudad Bolívar y el corredor Autopista Sur.'
-            : 'Bajo la configuración base de 5 celdas centrales, se detectan dos brechas críticas de propagación (RSSI < -114 dBm) sobre el eje Bosa–Soacha y la zona alta de Ciudad Bolívar, generando interrupciones de paquete en flotas de carga.'}</p>
-          <p><strong>• Evaluación Financiera y Recomendación B2B:</strong> ${isGapCovered
-            ? 'La mitigación total de puntos ciegos reduce la exposición operativa por pérdida de trazabilidad a $0 USD/hora, protegiendo cadenas de frío y cumplimiento de entregas SLA con un retorno de inversión proyectado inferior a 3 meses.'
-            : 'La exposición financiera actual asciende a $2,150 USD/hora por desconexión telemétrica de 18 unidades de carga. Se recomienda activar la licencia Enterprise Pro (20 nodos) o ejecutar el despliegue CAPEX en el sector sur-occidental.'}</p>
+          <p><strong>1. Balance de Capacidad Espectral y Rendimiento (Throughput):</strong> La red auditada dispone de <strong>${activeCells.length} estaciones base activas</strong> operando en espectro sub-6 GHz (Banda n78 - 3.5 GHz) con canalización de 100 MHz TDD. El tráfico agregado certificado alcanza <strong>${totalThroughput.toLocaleString()} Mbps (${(totalThroughput / 1000).toFixed(2)} Gbps)</strong>, con una latencia media de plano de usuario de <strong>${avgLatency} ms</strong> y pérdida de paquetes inferior al 0.02% en las zonas con línea de vista (LoS).</p>
+          <p><strong>2. Modelado de Propagación EIRP y Cobertura Geoespacial:</strong> Con una Potencia Radiada Isotrópica Equivalente media de <strong>${avgEirp} dBm</strong> (antenas Massive MIMO 64T64R), cada macro-celda sostiene un radio efectivo entre 2.9 km y 3.8 km bajo modelo urbano denso (3GPP TR 38.901 UMa). ${isGapCovered
+            ? 'La activación de los nodos perimetrales consolida una malla continua desde Chía hasta Soacha y desde Mosquera hasta los Cerros Orientales, asegurando handover sin cortes (Zero-Interruption Handover) en toda el área metropolitana.'
+            : 'En la topología base actual (5 nodos centrales), la atenuación por distancia y topografía genera dos zonas de sombra crítica (RSSI < -114 dBm, SINR < -3 dB) en el eje Bosa–Soacha y la ladera alta de Ciudad Bolívar.'}</p>
+          <p><strong>3. Dictamen Financiero B2B y Retorno de Inversión (ROI):</strong> ${isGapCovered
+            ? 'La continuidad telemétrica del 100% elimina las ventanas ciegas en rutas de distribución refrigerada y carga de alto valor, generando un ahorro operativo estimado de $2,150 USD/hora frente a escenarios de desconexión y amortizando la infraestructura en menos de 90 días.'
+            : 'La interrupción de telemetría IoT sobre 18 vehículos de carga en el corredor sur representa una exposición financiera de $2,150 USD/hora por pérdida de trazabilidad y riesgo de incumplimiento SLA. Se recomienda migrar al plan Enterprise Pro (20 celdas) o ejecutar el despliegue CAPEX en el sur-occidente.'}</p>
+        `;
+
+        document.getElementById('rep-corridors-grid').innerHTML = `
+          <div class="p-3 rounded-xl border border-emerald-200 bg-emerald-50/70">
+            <p class="font-extrabold text-emerald-900">Eje Noroccidente (Calle 80 – Siberia)</p>
+            <p class="text-emerald-800 mt-1"><strong>Estado: ÓPTIMO (100% SLA)</strong></p>
+            <p class="text-slate-700 mt-1">Cobertura continua para parques industriales y centros de distribución. Latencia media de 11.7 ms.</p>
+          </div>
+          <div class="p-3 rounded-xl border ${isGapCovered ? 'border-emerald-200 bg-emerald-50/70' : 'border-rose-200 bg-rose-50/70'}">
+            <p class="font-extrabold ${isGapCovered ? 'text-emerald-900' : 'text-rose-900'}">Corredor Autopista Sur (Bosa – Soacha)</p>
+            <p class="${isGapCovered ? 'text-emerald-800' : 'text-rose-800'} mt-1"><strong>Estado: ${isGapCovered ? 'RECUPERADO (SLA 99.8%)' : 'CRÍTICO (RSSI -114 dBm)'}</strong></p>
+            <p class="text-slate-700 mt-1">${isGapCovered ? 'Solapamiento celular activo tras expansión de nodos sur-occidentales.' : 'Brecha de 4.2 km sin cobertura 3.5 GHz afectando telemetría de carga pesada.'}</p>
+          </div>
+          <div class="p-3 rounded-xl border ${isGapCovered ? 'border-emerald-200 bg-emerald-50/70' : 'border-amber-200 bg-amber-50/70'}">
+            <p class="font-extrabold ${isGapCovered ? 'text-emerald-900' : 'text-amber-900'}">Sector Sur-Oriental (Ciudad Bolívar)</p>
+            <p class="${isGapCovered ? 'text-emerald-800' : 'text-amber-800'} mt-1"><strong>Estado: ${isGapCovered ? 'CUBIERTO' : 'SOMBRA OROGRÁFICA'}</strong></p>
+            <p class="text-slate-700 mt-1">${isGapCovered ? 'Cobertura garantizada mediante nodo de alta ganancia en cota elevada.' : 'Requiere celda dedicada para compensar obstrucción por relieve montañoso.'}</p>
+          </div>
         `;
 
         document.getElementById('rep-table-body').innerHTML = activeCells.map(c => `
