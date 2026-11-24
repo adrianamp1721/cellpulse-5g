@@ -3,445 +3,777 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CellPulse 5G - Interactive Coverage & Radiation Map</title>
+  <title>CellPulse 5G | Enterprise NOC & Spatial Telemetry SaaS</title>
   
-  <!-- Leaflet CSS -->
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Leaflet CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body, html {
-      width: 100%;
-      height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: #0f172a;
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #090d16;
       color: #f8fafc;
-      overflow: hidden;
     }
-    header {
-      height: 60px;
-      background: #1e293b;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 20px;
-      border-bottom: 2px solid #00f2fe;
-      z-index: 1000;
-      position: relative;
+    .font-display { font-family: 'Space Grotesk', sans-serif; }
+    .font-mono-tech { font-family: 'JetBrains Mono', monospace; }
+
+    /* Custom Scrollbar for NOC Sidebar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+
+    /* Pulse marker for blind spots on logistics routes */
+    .pulse-warning {
+      width: 18px;
+      height: 18px;
+      background: #ef4444;
+      border: 2px solid #ffffff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 rgba(239, 68, 68, 0.7);
+      animation: pulse-red 1.8s infinite;
     }
-    .logo {
-      font-size: 20px;
-      font-weight: bold;
-      color: #00f2fe;
+    @keyframes pulse-red {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.85); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
-    .badge {
-      background: #7c3aed;
-      color: #fff;
-      padding: 4px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: bold;
-    }
-    #map {
-      width: 100%;
-      height: calc(100vh - 60px);
-    }
-    /* Panel lateral flotante */
-    .pricing-card {
-      position: absolute;
-      top: 80px;
-      right: 20px;
-      width: 280px;
-      background: rgba(30, 41, 59, 0.95);
-      backdrop-filter: blur(8px);
-      border: 1px solid #334155;
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      z-index: 1000;
-    }
-    .pricing-card h4 {
-      color: #00f2fe;
-      margin-bottom: 8px;
-    }
-    .pricing-card p {
-      font-size: 13px;
-      color: #94a3b8;
-      margin-bottom: 14px;
-      line-height: 1.4;
-    }
-    .btn-pro {
-      width: 100%;
-      background: #00f2fe;
-      color: #0f172a;
-      border: none;
-      padding: 10px;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .btn-pro:hover {
-      background: #38ef7d;
-    }
-    /* Modal de Suscripción */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(4px);
-      z-index: 9999;
-      align-items: center;
-      justify-content: center;
-    }
-    .modal-content {
-      background: #1e293b;
-      color: #fff;
-      padding: 24px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 420px;
-      border: 1px solid #334155;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-    }
-    .modal-content h3 {
-      color: #00f2fe;
-      margin-bottom: 8px;
-    }
-    .modal-content p {
-      font-size: 13px;
-      color: #94a3b8;
-      margin-bottom: 16px;
-    }
-    .form-group {
-      margin-bottom: 12px;
-    }
-    .form-group label {
-      display: block;
-      font-size: 12px;
-      margin-bottom: 4px;
-      color: #cbd5e1;
-    }
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #475569;
-      background: #0f172a;
-      color: #fff;
-      font-size: 14px;
-    }
-    .form-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-top: 20px;
-    }
-    .btn-cancel {
-      padding: 8px 16px;
-      border-radius: 6px;
-      border: none;
-      background: #475569;
-      color: #fff;
-      cursor: pointer;
-    }
-    .btn-submit {
-      padding: 8px 16px;
-      border-radius: 6px;
-      border: none;
-      background: #00f2fe;
-      color: #0f172a;
-      font-weight: bold;
-      cursor: pointer;
+
+    /* Consulting PDF Print View */
+    #print-report { display: none; }
+    @media print {
+      body { background: #ffffff !important; color: #0f172a !important; overflow: visible !important; height: auto !important; }
+      #app-shell { display: none !important; }
+      #print-report { display: block !important; padding: 32px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+      th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; font-size: 12px; }
+      th { background: #f1f5f9; font-weight: 700; }
     }
   </style>
 </head>
-<body>
+<body class="h-screen flex flex-col overflow-hidden">
 
-  <header>
-    <div class="logo">CellPulse 5G</div>
-    <div class="badge">B2B SaaS Platform</div>
-  </header>
+  <!-- MAIN APPLICATION SHELL -->
+  <div id="app-shell" class="h-full flex flex-col">
 
-  <!-- Tarjeta lateral flotante -->
-  <div class="pricing-card">
-    <h4>Suscripción Empresarial</h4>
-    <p>Acceso a la API de mapas de cobertura, radiación EIRP y reporte de puntos ciegos.</p>
-    <button onclick="subscribeAPI()" class="btn-pro">Adquirir API Pro</button>
-    
-    <!-- Botón de Exportar API QoS a PDF -->
-    <button onclick="downloadQoSReport()" class="btn-pro" style="margin-top: 8px; background: #7c3aed; color: #fff;">
-      Exportar Informe QoS (PDF)
-    </button>
-  </div>
-
-  <!-- Contenedor del Mapa -->
-  <div id="map"></div>
-
-  <!-- Modal Formulario 7 Días -->
-  <div id="subscriptionModal" class="modal-overlay">
-    <div class="modal-content">
-      <h3>Prueba Gratuita API Pro (7 Días)</h3>
-      <p>Ingresa tus datos básicos para desbloquear la densidad completa de torres 5G y zonas de radiación en Bogotá:</p>
-      <form id="trialForm" onsubmit="handleTrialSubmit(event)">
-        <div class="form-group">
-          <label>Nombre completo:</label>
-          <input type="text" required placeholder="Ej. Ana Gómez">
+    <!-- TOP HEADER -->
+    <header class="h-16 bg-slate-900 border-b border-slate-800 px-4 lg:px-6 flex items-center justify-between shrink-0 z-30">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+          <i data-lucide="radio-tower" class="w-5 h-5 text-white"></i>
         </div>
-        <div class="form-group">
-          <label>Correo electrónico:</label>
-          <input type="email" required placeholder="ana@empresa.com">
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-display font-bold text-lg tracking-tight text-white">CellPulse 5G</h1>
+            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">ENTERPRISE NOC</span>
+          </div>
+          <p class="text-[11px] text-slate-400 hidden sm:block">Cobertura Macro-Celular Bogotá D.C. &amp; Telemetría de Carga IoT</p>
         </div>
-        <div class="form-actions">
-          <button type="button" onclick="closeModal()" class="btn-cancel">Cancelar</button>
-          <button type="submit" class="btn-submit">Activar 7 Días</button>
+      </div>
+
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Role Switcher -->
+        <select id="roleSelect" onchange="changeRole()" class="bg-slate-800 border border-slate-700 text-slate-100 text-xs sm:text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500 cursor-pointer">
+          <option value="telecom">Rol: Ingeniero Telecomunicaciones</option>
+          <option value="logistics">Rol: Gerente Flota Logística</option>
+        </select>
+
+        <!-- Pro License Button -->
+        <button id="proBtn" onclick="openProModal()" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer">
+          <i data-lucide="crown" class="w-4 h-4"></i>
+          <span id="proBtnText" class="hidden md:inline">Activar Red Pro (20 Celdas)</span>
+          <span id="proBtnTextMobile" class="md:hidden">Pro (20)</span>
+        </button>
+
+        <!-- PDF Export Button -->
+        <button onclick="exportConsultingPDF()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 transition cursor-pointer">
+          <i data-lucide="file-text" class="w-4 h-4 text-sky-400"></i>
+          <span class="hidden sm:inline">Informe QoS</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- EXECUTIVE KPI RIBBON -->
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 px-4 lg:px-6 py-3 bg-slate-950 border-b border-slate-800 shrink-0">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Disponibilidad SLA Bogotá</p>
+          <h3 id="kpi-sla" class="font-mono-tech text-xl font-bold text-white mt-0.5">91.8%</h3>
         </div>
-      </form>
+        <span id="kpi-sla-badge" class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30">2 Zonas Críticas</span>
+      </div>
+
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Latencia E2E (Banda n78)</p>
+          <h3 id="kpi-latency" class="font-mono-tech text-xl font-bold text-sky-400 mt-0.5">14.8 ms</h3>
+        </div>
+        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+          <i data-lucide="activity" class="w-3.5 h-3.5"></i> En Vivo
+        </span>
+      </div>
+
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Macro-Celdas Activas</p>
+          <h3 id="kpi-cells" class="font-mono-tech text-xl font-bold text-white mt-0.5">5 / 20</h3>
+        </div>
+        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-sky-500/15 text-sky-400 border border-sky-500/30">Bogotá &amp; Sabana</span>
+      </div>
+
+      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+        <div>
+          <p class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Riesgo Carga IoT / Hora</p>
+          <h3 id="kpi-risk" class="font-mono-tech text-xl font-bold text-amber-400 mt-0.5">$2,150 USD</h3>
+        </div>
+        <span id="kpi-risk-badge" class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30">Pérdida Telemetría</span>
+      </div>
+    </section>
+
+    <!-- WORKSPACE: SIDEBAR + MAP -->
+    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+
+      <!-- LEFT CONTROL SIDEBAR -->
+      <aside class="w-full lg:w-[390px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col gap-4 overflow-y-auto shrink-0 max-h-[42vh] lg:max-h-full">
+
+        <!-- Layer Filters -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Capas de Cobertura Bogotá</h4>
+            <i data-lucide="layers" class="w-4 h-4 text-slate-400"></i>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="filterMap('all', this)" class="filter-btn active bg-sky-500/15 border border-sky-500 text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer">
+              Vista Completa Bogotá
+            </button>
+            <button onclick="filterMap('5g', this)" class="filter-btn bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer">
+              Macro-Celdas 5G n78
+            </button>
+            <button onclick="filterMap('corridor', this)" class="filter-btn bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer">
+              Corredores Logísticos
+            </button>
+            <button onclick="filterMap('blind', this)" class="filter-btn bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer">
+              Zonas Sin Cobertura
+            </button>
+          </div>
+        </div>
+
+        <!-- LOGISTICS CORRIDOR EXPLANATION CARD (Crystal Clear B2B Value) -->
+        <div class="bg-slate-800/70 border border-emerald-500/30 rounded-xl p-3.5">
+          <div class="flex items-center justify-between mb-1.5">
+            <h5 class="text-xs font-bold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wide">
+              <i data-lucide="truck" class="w-4 h-4"></i> ¿Qué mide el Corredor Logístico?
+            </h5>
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-semibold">Telemetría Flota</span>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed mb-2.5">
+            Audita la continuidad de señal 5G en las rutas de transporte pesado (<strong>Calle 80 - Siberia</strong> y <strong>Autopista Sur</strong>) para garantizar rastreo GPS en vivo, cadena de frío y seguridad de carga:
+          </p>
+          <div class="space-y-1.5 text-[11px]">
+            <div class="flex items-center gap-2 text-slate-200">
+              <span class="w-5 h-1.5 bg-emerald-400 rounded-full inline-block"></span>
+              <span><strong>Tramo Verde (Óptimo):</strong> Dentro del radio EIRP; GPS y sensores IoT activos sin cortes.</span>
+            </div>
+            <div class="flex items-center gap-2 text-slate-200">
+              <span class="w-5 h-1.5 border-b-2 border-dashed border-rose-500 inline-block"></span>
+              <span><strong>Tramo Rojo (Punto Ciego):</strong> Pérdida de paquete (&gt;120ms); riesgo de robo o falla de refrigeración.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- WHAT-IF CAPEX SIMULATOR -->
+        <div class="bg-gradient-to-b from-indigo-950/60 to-slate-900 border border-indigo-500/40 rounded-xl p-3.5">
+          <h5 class="text-xs font-bold text-indigo-300 flex items-center gap-1.5 uppercase tracking-wide mb-1">
+            <i data-lucide="sparkles" class="w-4 h-4"></i> Simulador Inversión CAPEX ("What-If")
+          </h5>
+          <p class="text-xs text-slate-300 leading-relaxed mb-3">
+            Simula el despliegue de 2 macro-celdas de refuerzo en <strong>Ciudad Bolívar</strong> y <strong>Kennedy/Autopista Sur</strong> para cerrar las brechas de los corredores logísticos:
+          </p>
+          <button id="simBtn" onclick="toggleCapexSimulation()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/25 transition cursor-pointer">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>Simular Despliegue Antenas Sur/Occidente</span>
+          </button>
+        </div>
+
+        <!-- LIVE TELEMETRY CHART -->
+        <div class="bg-slate-800/60 border border-slate-700/80 rounded-xl p-3">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tráfico Agregado Bogotá (Mbps)</h4>
+            <span class="text-[11px] font-mono-tech text-sky-400" id="live-mbps-label">742 Mbps</span>
+          </div>
+          <canvas id="telemetryChart" height="100"></canvas>
+        </div>
+
+        <!-- NODE INVENTORY SEARCH & QUICK LIST (20 MACRO-CELLS) -->
+        <div class="bg-slate-800/60 border border-slate-700/80 rounded-xl p-3">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Inventario de Nodos (20 Celdas)</h4>
+            <span id="inventory-count-badge" class="text-[10px] font-mono-tech text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full">5 Activas</span>
+          </div>
+          <div class="relative mb-2">
+            <input type="text" id="nodeSearchInput" onkeyup="renderNodeList()" placeholder="Buscar localidad, ID (ej. CP-14, Chía, Soacha)..." class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2"></i>
+          </div>
+          <div id="node-inventory-list" class="max-h-40 overflow-y-auto space-y-1.5 pr-1"></div>
+        </div>
+
+        <!-- ACTIVE ALERTS -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Alertas de Continuidad &amp; SLA</h4>
+          <div class="space-y-2" id="alerts-container">
+            <div id="alert-sur" class="bg-rose-500/10 border-l-4 border-rose-500 rounded-r-xl p-2.5 text-xs">
+              <p class="font-bold text-rose-300">Corte en Corredor Autopista Sur (Bosa/Soacha)</p>
+              <p class="text-slate-400 text-[11px] mt-0.5">RSSI -114 dBm. 18 camiones sin reporte telemétrico en tiempo real.</p>
+            </div>
+            <div id="alert-cb" class="bg-rose-500/10 border-l-4 border-rose-500 rounded-r-xl p-2.5 text-xs">
+              <p class="font-bold text-rose-300">Punto Ciego Macro: Ciudad Bolívar Alta</p>
+              <p class="text-slate-400 text-[11px] mt-0.5">Sombra orográfica sin cobertura 3.5 GHz. Impacto SLA urbano.</p>
+            </div>
+          </div>
+        </div>
+
+      </aside>
+
+      <!-- INTERACTIVE BOGOTÁ MAP -->
+      <main class="flex-1 relative bg-slate-950">
+        <div id="map" class="w-full h-full z-10"></div>
+
+        <!-- FLOATING MAP LEGEND -->
+        <div class="absolute bottom-5 right-5 z-20 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-2xl p-3.5 shadow-2xl max-w-xs">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Convenciones Geoespaciales</p>
+          <div class="space-y-1.5 text-xs text-slate-200">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-sky-500 inline-block shrink-0"></span>
+              <span>Macro-Celda 5G Base (Radio 2.6 - 3.5 km)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-violet-500 inline-block shrink-0"></span>
+              <span>Macro-Celda Pro Expandida (Alta Capacidad)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-1 bg-emerald-400 inline-block shrink-0"></span>
+              <span>Corredor Logístico con Señal Óptima</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-4 h-0.5 border-b-2 border-dashed border-rose-500 inline-block shrink-0"></span>
+              <span>Tramo Crítico / Pérdida Telemetría IoT</span>
+            </div>
+          </div>
+        </div>
+      </main>
+
     </div>
   </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  
-  <script>
-    // 1. Inicialización del Mapa centrado en Bogotá
-    var map = L.map('map').setView([4.635, -74.082], 12);
+  <!-- PRO SUBSCRIPTION MODAL -->
+  <div id="proModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+          <i data-lucide="crown" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h3 class="font-display font-bold text-lg text-white">Desbloquear Red Macro-Celular Pro (20 Nodos)</h3>
+          <p class="text-xs text-slate-400">Cobertura total Bogotá D.C., Chía, Funza, Mosquera y Soacha</p>
+        </div>
+      </div>
+      <p class="text-xs text-slate-300 leading-relaxed mb-4">
+        Activa las <strong>15 macro-celdas Enterprise Pro adicionales</strong> (20 nodos en total) para cubrir toda el área metropolitana, parques industriales de Sabana Occidente, Norte y Sur.
+      </p>
+      <div class="space-y-3 mb-5">
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Empresa / Operador B2B</label>
+          <input type="text" id="corpName" placeholder="Ej. Transportes & Logística Bogotá S.A.S." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500">
+        </div>
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Correo Corporativo</label>
+          <input type="email" id="corpEmail" placeholder="operaciones@empresa.com.co" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button onclick="closeProModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer">Cancelar</button>
+        <button onclick="activatePro()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-semibold cursor-pointer">Activar 20 Macro-Celdas</button>
+      </div>
+    </div>
+  </div>
 
-    // Servidor GIS libre de Esri (sin requerimiento de API Key)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; CellPulse 5G Coverage Map'
+  <!-- EXECUTIVE PDF CONSULTING REPORT -->
+  <div id="print-report">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0f172a; padding-bottom:12px;">
+      <div>
+        <h1 style="font-size:22px; font-weight:700; margin:0;">INFORME EJECUTIVO DE COBERTURA 5G &amp; CORREDORES LOGÍSTICOS</h1>
+        <p style="font-size:12px; color:#475569; margin:4px 0 0 0;">Plataforma CellPulse 5G Enterprise NOC | Bogotá D.C., Colombia</p>
+      </div>
+      <div style="text-align:right; font-size:12px;">
+        <strong>Fecha:</strong> <span id="pdf-date"></span><br>
+        <strong>Cliente:</strong> <span id="pdf-client">Auditoría Corporativa Bogotá</span>
+      </div>
+    </div>
+
+    <div style="margin-top:16px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px;">
+      <strong>Resumen Ejecutivo de Indicadores:</strong><br>
+      • Disponibilidad SLA Ciudad: <strong id="pdf-sla">91.8%</strong> |
+      • Macro-Celdas Activas: <strong id="pdf-cells">5 / 20</strong> |
+      • Riesgo Financiero en Ruta: <strong id="pdf-risk">$2,150 USD/hr</strong>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID Nodo</th>
+          <th>Localidad / Sector Bogotá</th>
+    // 1. INITIALIZE BOGOTÁ METROPOLITAN MAP (Centered to cover Bogotá + Chía, Funza, Mosquera, Soacha)
+    const map = L.map('map', { zoomControl: true }).setView([4.6550, -74.1150], 11);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap &copy; CARTO',
+      maxZoom: 18
     }).addTo(map);
 
-    // 2. Antenas iniciales (Modo Gratuito Básico) + Círculos de Radiación
-    var baseMarkers = [
-      L.marker([4.6097, -74.0817]).bindPopup('<b>Torre CP-01 (Centro)</b><br>Estado: Operativa 5G<br>Radiación: 62 dBm (1.5 kW)'),
-      L.marker([4.6280, -74.0650]).bindPopup('<b>Torre CP-02 (Chapinero)</b><br>Estado: Operativa 4G/5G<br>Radiación: 58 dBm (630 W)'),
-      L.marker([4.5980, -74.0760]).bindPopup('<b>Torre CP-03 (La Candelaria)</b><br>Estado: Mantenimiento<br>Radiación: 45 dBm (31 W)')
+    let isPro = false;
+    let isSimulated = false;
+    let currentFilter = 'all';
+    let layerGroup = L.layerGroup().addTo(map);
+
+    // 2. EXPANDED 20 STRATEGIC MACRO-CELLS ACROSS BOGOTÁ & SABANA (5 Base + 15 Enterprise Pro)
+    const baseMacroCells = [
+      { id: 'CP-01', name: 'Centro Internacional & Teusaquillo', lat: 4.6220, lng: -74.0720, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -61, radius: 2900, type: '5g', pro: false },
+      { id: 'CP-02', name: 'Chapinero Financiero & Calle 72', lat: 4.6580, lng: -74.0580, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -58, radius: 2800, type: '5g', pro: false },
+      { id: 'CP-03', name: 'Salitre & Avenida El Dorado', lat: 4.6620, lng: -74.1050, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -59, radius: 3200, type: '5g', pro: false },
+      { id: 'CP-04', name: 'Engativá & Portal Calle 80', lat: 4.7060, lng: -74.1120, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -63, radius: 3100, type: '5g', pro: false },
+      { id: 'CP-05', name: 'Puente Aranda Zona Industrial', lat: 4.6280, lng: -74.1140, freq: '700 MHz (n28)', eirp: '63 dBm (2.0 kW)', rssi: -66, radius: 3400, type: '4g', pro: false }
     ];
 
-    var baseCircles = [
-      L.circle([4.6097, -74.0817], { color: '#00f2fe', fillColor: '#00f2fe', fillOpacity: 0.15, radius: 1200 }),
-      L.circle([4.6280, -74.0650], { color: '#00f2fe', fillColor: '#00f2fe', fillOpacity: 0.15, radius: 1500 }),
-      L.circle([4.5980, -74.0760], { color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 0.15, radius: 800 })
+    const proMacroCells = [
+      { id: 'CP-06', name: 'Usaquén & Calle 127 Norte', lat: 4.7040, lng: -74.0350, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -60, radius: 3300, type: '5g', pro: true },
+      { id: 'CP-07', name: 'Suba Centro & Av. Cali Norte', lat: 4.7420, lng: -74.0880, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -62, radius: 3500, type: '5g', pro: true },
+      { id: 'CP-08', name: 'Fontibón & Aeropuerto El Dorado', lat: 4.6920, lng: -74.1480, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -57, radius: 3500, type: '5g', pro: true },
+      { id: 'CP-09', name: 'Parque Logístico Siberia (Calle 80 Occ.)', lat: 4.7320, lng: -74.1560, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -64, radius: 3400, type: '5g', pro: true },
+      { id: 'CP-10', name: 'Kennedy Central & Corabastos', lat: 4.6250, lng: -74.1560, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -63, radius: 3200, type: '5g', pro: true },
+      { id: 'CP-11', name: 'Chía Centro & Variante Norte', lat: 4.8580, lng: -74.0580, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -61, radius: 3800, type: '5g', pro: true },
+      { id: 'CP-12', name: 'Autopista Norte & Calle 170 (Toberín)', lat: 4.7560, lng: -74.0450, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -59, radius: 3300, type: '5g', pro: true },
+      { id: 'CP-13', name: 'Suba Tibabuyes & Lisboa Occidente', lat: 4.7450, lng: -74.1220, freq: '700 MHz (n28)', eirp: '64 dBm (2.5 kW)', rssi: -65, radius: 3200, type: '4g', pro: true },
+      { id: 'CP-14', name: 'Funza Zona Franca & Parque Industrial', lat: 4.7160, lng: -74.2120, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -60, radius: 3700, type: '5g', pro: true },
+      { id: 'CP-15', name: 'Mosquera & Corredor Calle 13 Carga', lat: 4.7020, lng: -74.2280, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -62, radius: 3600, type: '5g', pro: true },
+      { id: 'CP-16', name: 'Bosa Recreo & El Porvenir', lat: 4.6180, lng: -74.1920, freq: '700 MHz (n28)', eirp: '64 dBm (2.5 kW)', rssi: -64, radius: 3100, type: '4g', pro: true },
+      { id: 'CP-17', name: 'Soacha Centro & Terreros Industrial', lat: 4.5820, lng: -74.2150, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -61, radius: 3600, type: '5g', pro: true },
+      { id: 'CP-18', name: 'San Cristóbal & Avenida 1ro de Mayo', lat: 4.5740, lng: -74.0880, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -63, radius: 3000, type: '5g', pro: true },
+      { id: 'CP-19', name: 'Usme Centro & Portal Almirante Padilla', lat: 4.5180, lng: -74.1180, freq: '700 MHz (n28)', eirp: '64 dBm (2.5 kW)', rssi: -66, radius: 3500, type: '4g', pro: true },
+      { id: 'CP-20', name: 'Santa Fe, La Candelaria & Monserrate', lat: 4.6020, lng: -74.0650, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -58, radius: 2800, type: '5g', pro: true }
     ];
 
-    baseMarkers.forEach(function(m) { m.addTo(map); });
-    baseCircles.forEach(function(c) { c.addTo(map); });
-
-    // 3. Antenas Premium PRO en Bogotá (Se desbloquean tras llenar el formulario)
-    var premiumMarkers = [
-      L.marker([4.6580, -74.0930]).bindPopup('<b>Torre CP-04 (Engativá)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 64 dBm (2.5 kW)'),
-      L.marker([4.6970, -74.0320]).bindPopup('<b>Torre CP-05 (Usaquén)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 60 dBm (1.0 kW)'),
-      L.marker([4.6350, -74.1350]).bindPopup('<b>Torre CP-06 (Kennedy)</b><br>Estado: Alerta Cobertura <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 50 dBm (100 W)'),
-      L.marker([4.5800, -74.1500]).bindPopup('<b>Torre CP-07 (Ciudad Bolívar)</b><br>Estado: Punto Ciego <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 40 dBm (10 W)'),
-      L.marker([4.6750, -74.0480]).bindPopup('<b>Torre CP-08 (Suba)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 62 dBm (1.5 kW)'),
-      L.marker([4.6480, -74.1080]).bindPopup('<b>Torre CP-09 (Fontibón)</b><br>Estado: Operativa 5G <b style="color:#00f2fe;">[PRO]</b><br>Radiación: 58 dBm (630 W)')
+    const proMacroCells = [
+      { id: 'CP-06', name: 'Usaquén & Calle 127 Norte', lat: 4.7040, lng: -74.0350, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -60, radius: 3300, type: '5g', pro: true },
+      { id: 'CP-07', name: 'Suba Centro & Av. Cali Norte', lat: 4.7420, lng: -74.0880, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -62, radius: 3600, type: '5g', pro: true },
+      { id: 'CP-08', name: 'Fontibón & Aeropuerto El Dorado', lat: 4.6920, lng: -74.1480, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -57, radius: 3500, type: '5g', pro: true },
+      { id: 'CP-09', name: 'Parque Logístico Siberia (Calle 80 Occ.)', lat: 4.7320, lng: -74.1560, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -64, radius: 3400, type: '5g', pro: true },
+      { id: 'CP-10', name: 'Kennedy Central & Corabastos', lat: 4.6250, lng: -74.1560, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -63, radius: 3200, type: '5g', pro: true }
     ];
 
-    var premiumCircles = [
-      L.circle([4.6580, -74.0930], { color: '#7c3aed', fillColor: '#7c3aed', fillOpacity: 0.15, radius: 2000 }),
-      L.circle([4.6970, -74.0320], { color: '#7c3aed', fillColor: '#7c3aed', fillOpacity: 0.15, radius: 1800 }),
-      L.circle([4.6350, -74.1350], { color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.20, radius: 1000 }),
-      L.circle([4.5800, -74.1500], { color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.25, radius: 600 }),
-      L.circle([4.6750, -74.0480], { color: '#7c3aed', fillColor: '#7c3aed', fillOpacity: 0.15, radius: 1700 }),
-      L.circle([4.6480, -74.1080], { color: '#7c3aed', fillColor: '#7c3aed', fillOpacity: 0.15, radius: 1400 })
+    // 3. TWO CLEAR LOGISTICS CORRIDORS (Optimal Green Segment + Blind Spot Red Dashed Segment)
+    // Corridor 1: Calle 80 Freight Corridor (From Heroes/Autonorte to Siberia Industrial Park)
+    const calle80Optimal = [
+      [4.6685, -74.0595],
+      [4.6840, -74.0790],
+      [4.6980, -74.0980],
+      [4.7110, -74.1180]
+    ];
+    const calle80BlindSegment = [
+      [4.7110, -74.1180],
+      [4.7240, -74.1390],
+      [4.7360, -74.1620] // Siberia Toll / Bridge gap when Pro is off
     ];
 
-    // 4. Lógica del Modal y Formulario de Suscripción
-    function subscribeAPI() {
-      document.getElementById('subscriptionModal').style.display = 'flex';
+    // Corridor 2: Autopista Sur Freight Corridor (From Muzú/NQS to Bosa/Soacha border)
+    const autoSurOptimal = [
+      [4.6090, -74.1050],
+      [4.5990, -74.1220]
+    ];
+    const autoSurBlindSegment = [
+      [4.5990, -74.1220],
+      [4.5880, -74.1450],
+      [4.5780, -74.1680] // Severe blind spot in Bosa / Autopista Sur
+    ];
+
+    // 4. RENDER MAP LAYERS
+    function renderMap(filter = currentFilter) {
+      currentFilter = filter;
+      layerGroup.clearLayers();
+      const activeCells = isPro ? [...baseMacroCells, ...proMacroCells] : baseMacroCells;
+
+      // A. Draw Macro-Cell Coverage Circles + Center Tower Markers
+      if (filter === 'all' || filter === '5g') {
+        activeCells.forEach(cell => {
+          if (filter === '5g' && cell.type !== '5g') return;
+          const color = cell.pro ? '#8b5cf6' : '#0ea5e9';
+
+          // Coverage Footprint Circle
+          L.circle([cell.lat, cell.lng], {
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.16,
+            radius: cell.radius,
+            weight: 1.8
+          }).bindTooltip(`
+            <div style="font-family:Inter,sans-serif; font-size:12px; line-height:1.4;">
+              <strong style="color:${color};">${cell.id} • ${cell.name}</strong><br>
+              Banda: <b>${cell.freq}</b> | EIRP: <b>${cell.eirp}</b><br>
+              Radio Efectivo: <b>${(cell.radius/1000).toFixed(1)} km</b> | RSSI: <b>${cell.rssi} dBm</b>
+            </div>
+          `).addTo(layerGroup);
+
+          // Tower Center Node Dot
+          L.circleMarker([cell.lat, cell.lng], {
+            radius: 5,
+            color: '#ffffff',
+            weight: 1.5,
+            fillColor: color,
+            fillOpacity: 1
+          }).addTo(layerGroup);
+        });
+      }
+
+      // B. Draw Logistics Corridors (Crystal Clear Optimal vs Blind Spot Segments)
+      if (filter === 'all' || filter === 'corridor') {
+        // Calle 80 Optimal Green Segment
+        L.polyline(calle80Optimal, {
+          color: '#10b981',
+          weight: 6,
+          opacity: 0.9
+        }).bindTooltip(`
+          <strong>Corredor Carga Calle 80 (Tramo Urbano)</strong><br>
+          Estado: <span style="color:#10b981;font-weight:bold;">ÓPTIMO (100% Telemetría GPS/IoT)</span><br>
+          Cobertura sostenida por nodos CP-03 y CP-04.
+        `).addTo(layerGroup);
+
+        // Calle 80 Western Segment (Covered if Pro CP-09 is active, otherwise Blind Spot!)
+        if (isPro) {
+          L.polyline(calle80BlindSegment, {
+            color: '#10b981',
+            weight: 6,
+            opacity: 0.9
+          }).bindTooltip(`<strong>Corredor Calle 80 - Siberia</strong><br>Cubierto por Macro-Celda Pro CP-09.`).addTo(layerGroup);
+        } else {
+          L.polyline(calle80BlindSegment, {
+            color: '#ef4444',
+            weight: 6,
+            dashArray: '10, 8',
+            opacity: 0.95
+          }).bindTooltip(`
+            <strong>⚠️ Punto Ciego Logístico: Salida Calle 80 - Siberia</strong><br>
+            Pérdida de señal 5G en zona de parques industriales.<br>
+            <em>Activa Red Pro para cubrir este tramo.</em>
+          `).addTo(layerGroup);
+        }
+
+        // Autopista Sur Optimal Segment
+        L.polyline(autoSurOptimal, {
+          color: '#10b981',
+          weight: 6,
+          opacity: 0.9
+        }).bindTooltip(`<strong>Corredor Industrial Autopista Sur (Tramo Norte)</strong><br>Señal 5G Estable.`).addTo(layerGroup);
+
+        // Autopista Sur Blind Segment (Resolved if CAPEX Simulation is active!)
+        if (isSimulated) {
+          L.polyline(autoSurBlindSegment, {
+            color: '#10b981',
+            weight: 6,
+            opacity: 0.95
+          }).bindTooltip(`<strong>[SIMULACIÓN CAPEX] Autopista Sur Cubierta</strong><br>Continuidad IoT restaurada al 99.4%.`).addTo(layerGroup);
+        } else {
+          L.polyline(autoSurBlindSegment, {
+            color: '#ef4444',
+            weight: 6,
+            dashArray: '10, 8',
+            opacity: 0.95
+          }).bindTooltip(`
+            <strong>🚨 Corte Crítico de Telemetría: Autopista Sur (Bosa)</strong><br>
+            18 vehículos de carga sin monitoreo de cadena de frío.<br>
+            Riesgo financiero: $1,300 USD/hora.
+          `).addTo(layerGroup);
+        }
+      }
+
+      // C. Draw Blind Spot Zones & Pulsing Markers
+      if (filter === 'all' || filter === 'blind' || filter === 'corridor') {
+        const pulseIcon = L.divIcon({ className: 'pulse-warning', iconSize: [18, 18] });
+
+        // Blind Spot 1: Autopista Sur / Bosa
+        if (!isSimulated) {
+          L.circle([4.5880, -74.1480], {
+            color: '#ef4444',
+            fillColor: '#ef4444',
+            fillOpacity: 0.2,
+            dashArray: '6,6',
+            radius: 2400
+          }).addTo(layerGroup);
+
+          L.marker([4.5880, -74.1480], { icon: pulseIcon })
+            .bindTooltip(`<strong>Zona Sin Cobertura: Autopista Sur / Bosa</strong><br>Haz clic en "Simular Despliegue Antenas" para resolver.`)
+            .addTo(layerGroup);
+        } else {
+          // Simulated New Macro-Cell in Bosa/Autopista Sur
+          L.circle([4.5880, -74.1480], {
+            color: '#10b981',
+            fillColor: '#10b981',
+            fillOpacity: 0.22,
+            radius: 3100,
+            weight: 2
+          }).bindTooltip(`<strong>[SIMULADO] Macro-Celda CP-SIM-SUR</strong><br>Cubre Autopista Sur y Bosa (EIRP 65 dBm)`).addTo(layerGroup);
+        }
+
+        // Blind Spot 2: Ciudad Bolívar Alta
+        if (!isSimulated) {
+          L.circle([4.5650, -74.1420], {
+            color: '#ef4444',
+            fillColor: '#ef4444',
+            fillOpacity: 0.2,
+            dashArray: '6,6',
+            radius: 2300
+          }).addTo(layerGroup);
+
+          L.marker([4.5650, -74.1420], { icon: pulseIcon })
+            .bindTooltip(`<strong>Punto Ciego Urbano: Ciudad Bolívar</strong><br>RSSI -115 dBm (Sin servicio 5G).`)
+            .addTo(layerGroup);
+        } else {
+          // Simulated New Macro-Cell in Ciudad Bolívar
+          L.circle([4.5650, -74.1420], {
+            color: '#10b981',
+            fillColor: '#10b981',
+            fillOpacity: 0.22,
+            radius: 3000,
+            weight: 2
+          }).bindTooltip(`<strong>[SIMULADO] Macro-Celda CP-SIM-CB</strong><br>Cubre Ciudad Bolívar Alta (EIRP 65 dBm)`).addTo(layerGroup);
+        }
+      }
+
+      updateKPIs();
+      renderNodeList();
     }
 
-    function closeModal() {
-      document.getElementById('subscriptionModal').style.display = 'none';
+    // 4B. RENDER SEARCHABLE 20-NODE INVENTORY LIST IN SIDEBAR
+    function renderNodeList() {
+      const container = document.getElementById('node-inventory-list');
+      const query = (document.getElementById('nodeSearchInput')?.value || '').toLowerCase();
+      const allCells = [...baseMacroCells, ...proMacroCells];
+      const activeTotal = isPro ? 20 : 5;
+
+      document.getElementById('inventory-count-badge').innerText = `${activeTotal} / 20 Activas`;
+      container.innerHTML = '';
+
+      const filtered = allCells.filter(c =>
+        c.id.toLowerCase().includes(query) ||
+        c.name.toLowerCase().includes(query) ||
+        c.freq.toLowerCase().includes(query)
+      );
+
+      filtered.forEach(cell => {
+        const unlocked = !cell.pro || isPro;
+        const badge = unlocked
+          ? `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400">Online</span>`
+          : `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">Pro</span>`;
+
+        container.innerHTML += `
+          <div onclick="focusNode(${cell.lat}, ${cell.lng}, ${unlocked})" class="flex items-center justify-between bg-slate-900/90 hover:bg-slate-800 border border-slate-800 rounded-lg px-2.5 py-1.5 cursor-pointer transition">
+            <div class="truncate pr-2">
+              <span class="font-mono-tech text-[11px] font-bold ${unlocked ? 'text-sky-400' : 'text-slate-500'}">${cell.id}</span>
+              <span class="text-[11px] ${unlocked ? 'text-slate-200' : 'text-slate-500'} ml-1">${cell.name}</span>
+            </div>
+            ${badge}
+          </div>
+        `;
+      });
     }
 
-    function handleTrialSubmit(event) {
-      event.preventDefault();
-      closeModal();
-
-      // Renderizar antenas y círculos de radiación adicionales en Bogotá
-      premiumMarkers.forEach(function(m) { m.addTo(map); });
-      premiumCircles.forEach(function(c) { c.addTo(map); });
-
-      // Ajustar encuadre de la vista
-      map.flyTo([4.640, -74.080], 12);
-
-      // Notificación al usuario
-      alert("¡Suscripción de prueba (7 días) activada exitosamente!\n\nSe ha enviado un correo de confirmación con la API Key Pro de prueba a tu cuenta.\n\nSe han desbloqueado 6 nuevas torres de cobertura 5G y sus huellas de radiación EIRP en Bogotá.");
+    function focusNode(lat, lng, unlocked) {
+      if (!unlocked) {
+        openProModal();
+        return;
+      }
+      map.flyTo([lat, lng], 13, { duration: 0.9 });
     }
 
-    // 5. Simulación API B2B: Generación e impresión del Informe PDF con Inventario de Radiación
-    function downloadQoSReport() {
-      const now = new Date().toLocaleString("es-CO", { timeZone: "America/Bogota" });
+    // 5. UPDATE EXECUTIVE KPIS
+    function updateKPIs() {
+      let activeCount = isPro ? 20 : 5;
+      if (isSimulated) activeCount += 2;
+      document.getElementById('kpi-cells').innerText = `${activeCount} / 20${isSimulated ? ' (+2 Sim)' : ''}`;
 
-      const printWindow = window.open('', '_blank');
-      
-      const pdfContent = `
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
-          <meta charset="UTF-8">
-          <title>Informe_Telemetria_CellPulse5G_QoS</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; }
-            .header { border-bottom: 3px solid #00f2fe; padding-bottom: 15px; margin-bottom: 25px; }
-            .logo { font-size: 24px; font-weight: bold; color: #0f172a; }
-            .sub { font-size: 14px; color: #64748b; }
-            h2 { color: #0284c7; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; margin-top: 25px; }
-            .metric-box { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-            .alert-box { background: #fef2f2; border-left: 4px solid #ef4444; padding: 10px 15px; margin-bottom: 10px; }
-            .footer { margin-top: 40px; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-            th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
-            th { background: #0284c7; color: white; }
-            tr:nth-child(even) { background: #f8fafc; }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <div class="logo">CELLPULSE 5G - Enterprise Telemetry & Radiation Report</div>
-            <div class="sub">Plataforma Cloud-Native B2B SaaS | Generado: ${now}</div>
-          </div>
+      let sla = 91.8;
+      let risk = 2150;
 
-          <h2>1. Resumen de Métricas de Red (QoS)</h2>
-          <div class="metric-box">
-            <p><strong>Región de Cobertura:</strong> Bogotá, D.C. - Colombia</p>
-            <p><strong>Disponibilidad de Servicio (SLA):</strong> 99.9% Garantizado</p>
-            <p><strong>Cobertura Promedio General:</strong> 94.2%</p>
-            <p><strong>Torres 5G/4G Registradas:</strong> 9 Nodos Monitoreados</p>
-            <p><strong>Latencia Promedio (RTT):</strong> 18.4 ms</p>
-            <p><strong>Tráfico Telemétrico (24h):</strong> 4.8 TB</p>
-          </div>
+      if (isPro) { sla += 4.6; risk -= 950; }
+      if (isSimulated) { sla += 3.2; risk -= 1100; }
 
-          <h2>2. Inventario de Antenas y Potencia de Radiación (EIRP)</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>ID Antena</th>
-                <th>Ubicación / Sector</th>
-                <th>Coordenadas</th>
-                <th>Frecuencia</th>
-                <th>Potencia Radiada (EIRP)</th>
-                <th>Radio Cobertura</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><b>CP-01</b></td>
-                <td>Centro Histórico</td>
-                <td>4.6097, -74.0817</td>
-                <td>3.5 GHz (n78)</td>
-                <td>62 dBm (1.5 kW)</td>
-                <td>1.2 km</td>
-              </tr>
-              <tr>
-                <td><b>CP-02</b></td>
-                <td>Chapinero Alto</td>
-                <td>4.6280, -74.0650</td>
-                <td>3.5 GHz / 700 MHz</td>
-                <td>58 dBm (630 W)</td>
-                <td>1.5 km</td>
-              </tr>
-              <tr>
-                <td><b>CP-03</b></td>
-                <td>La Candelaria</td>
-                <td>4.5980, -74.0760</td>
-                <td>2.6 GHz (4G)</td>
-                <td>45 dBm (31 W)</td>
-                <td>800 m</td>
-              </tr>
-              <tr>
-                <td><b>CP-04 [PRO]</b></td>
-                <td>Engativá Calle 80</td>
-                <td>4.6580, -74.0930</td>
-                <td>3.5 GHz (n78)</td>
-                <td>64 dBm (2.5 kW)</td>
-                <td>2.0 km</td>
-              </tr>
-              <tr>
-                <td><b>CP-05 [PRO]</b></td>
-                <td>Usaquén Santa Bárbara</td>
-                <td>4.6970, -74.0320</td>
-                <td>3.5 GHz (n78)</td>
-                <td>60 dBm (1.0 kW)</td>
-                <td>1.8 km</td>
-              </tr>
-              <tr>
-                <td><b>CP-06 [PRO]</b></td>
-                <td>Kennedy Central</td>
-                <td>4.6350, -74.1350</td>
-                <td>3.5 GHz (n78)</td>
-                <td>50 dBm (100 W)</td>
-                <td>1.0 km</td>
-              </tr>
-              <tr>
-                <td><b>CP-07 [PRO]</b></td>
-                <td>Ciudad Bolívar</td>
-                <td>4.5800, -74.1500</td>
-                <td>700 MHz (n28)</td>
-                <td>40 dBm (10 W)</td>
-                <td>600 m</td>
-              </tr>
-            </tbody>
-          </table>
+      document.getElementById('kpi-sla').innerText = `${sla.toFixed(1)}%`;
+      document.getElementById('kpi-risk').innerText = `$${Math.max(100, risk).toLocaleString()} USD`;
 
-          <h2>3. Puntos Ciegos Detectados</h2>
-          <div class="alert-box">
-            <strong>[ALERTA BS-01] Sector Ciudad Bolívar (Lat: 4.5800, Lng: -74.1500)</strong><br>
-            Nivel RSSI: -115 dBm (Cobertura Crítica / Pérdida de paquetes). Potencia de celda insuficiente para la topografía del sector.
-          </div>
-          <div class="alert-box">
-            <strong>[ALERTA BS-02] Sector Kennedy Central (Lat: 4.6350, Lng: -74.1350)</strong><br>
-            Nivel RSSI: -108 dBm (Degradación en horas pico). Recomendación: Incrementar azimut y EIRP +3 dBm.
-          </div>
+      const slaBadge = document.getElementById('kpi-sla-badge');
+      const riskBadge = document.getElementById('kpi-risk-badge');
 
-          <h2>4. Continuidad en Rutas Críticas de IoT</h2>
-          <div class="metric-box">
-            <p><strong>Ruta Logística #01 (Corredor Calle 80):</strong> 99.1% Continuidad de señal 5G asegurada mediante celdas CP-02, CP-04 y CP-05.</p>
-          </div>
-
-          <div class="footer">
-            Autenticación API Key Pro: CP_LIVE_994827103_SECURE | Despliegue Automatizado Azure & GitHub Actions
-          </div>
-
-          <script>
-            window.onload = function() {
-              window.print();
-            };
-          <\/script>
-        </body>
-        </html>
-      `;
-
-      printWindow.document.write(pdfContent);
-      printWindow.document.close();
+      if (sla >= 99.0) {
+        slaBadge.className = 'text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+        slaBadge.innerText = 'SLA Óptimo Metropolitano';
+        riskBadge.className = 'text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+        riskBadge.innerText = 'Riesgo Mitigado';
+      } else {
+        slaBadge.className = 'text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30';
+        slaBadge.innerText = isSimulated ? 'Brecha Siberia' : '2 Zonas Críticas';
+      }
     }
 
-    // 6. Ruta de transporte Logístico B2B (Calle 80 / Conectividad Crítica)
-    var routeCoordinates = [
-      [4.6280, -74.0650], // Chapinero
-      [4.6580, -74.0930], // Engativá
-      [4.6800, -74.1200]  // Salida Bogotá
-    ];
+    // 6. WHAT-IF CAPEX SIMULATION
+    function toggleCapexSimulation() {
+      isSimulated = !isSimulated;
+      const btn = document.getElementById('simBtn');
+      const alertSur = document.getElementById('alert-sur');
+      const alertCb = document.getElementById('alert-cb');
 
-    var routePolyline = L.polyline(routeCoordinates, {
-      color: '#00f2fe',
-      weight: 4,
-      dashArray: '8, 8',
-      opacity: 0.9
-    }).addTo(map);
+      if (isSimulated) {
+        btn.className = 'w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition cursor-pointer';
+        btn.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i><span>2 Macro-Celdas Simuladas Activas (ROI: 4m)</span>`;
 
-    routePolyline.bindPopup('<b>Ruta Logística Crítica #01</b><br>Garantía de conectividad IoT: 99.1%');
+        alertSur.className = 'bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-xl p-2.5 text-xs';
+        alertSur.innerHTML = `<p class="font-bold text-emerald-300">Resuelto (Simulación): Autopista Sur</p><p class="text-slate-300 text-[11px] mt-0.5">Telemetría de flota restaurada al 100% en Bosa/Soacha.</p>`;
+
+        alertCb.className = 'bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-xl p-2.5 text-xs';
+        alertCb.innerHTML = `<p class="font-bold text-emerald-300">Resuelto (Simulación): Ciudad Bolívar</p><p class="text-slate-300 text-[11px] mt-0.5">Cobertura macro-celular 3.5 GHz proyectada.</p>`;
+      } else {
+        btn.className = 'w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/25 transition cursor-pointer';
+        btn.innerHTML = `<i data-lucide="plus-circle" class="w-4 h-4"></i><span>Simular Despliegue Antenas Sur/Occidente</span>`;
+
+        alertSur.className = 'bg-rose-500/10 border-l-4 border-rose-500 rounded-r-xl p-2.5 text-xs';
+        alertSur.innerHTML = `<p class="font-bold text-rose-300">Corte en Corredor Autopista Sur (Bosa/Soacha)</p><p class="text-slate-400 text-[11px] mt-0.5">RSSI -114 dBm. 18 camiones sin reporte telemétrico en tiempo real.</p>`;
+
+        alertCb.className = 'bg-rose-500/10 border-l-4 border-rose-500 rounded-r-xl p-2.5 text-xs';
+        alertCb.innerHTML = `<p class="font-bold text-rose-300">Punto Ciego Macro: Ciudad Bolívar Alta</p><p class="text-slate-400 text-[11px] mt-0.5">Sombra orográfica sin cobertura 3.5 GHz. Impacto SLA urbano.</p>`;
+      }
+      lucide.createIcons();
+      renderMap();
+    }
+
+    // 7. FILTER BUTTONS
+    function filterMap(type, btn) {
+      document.querySelectorAll('.filter-btn').forEach(b => {
+        b.className = 'filter-btn bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer';
+      });
+      btn.className = 'filter-btn active bg-sky-500/15 border border-sky-500 text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer';
+      renderMap(type);
+    }
+
+    // 8. ROLE SWITCHER (Auto-zooms to Logistics Corridors when Logistics Role selected)
+    function changeRole() {
+      const role = document.getElementById('roleSelect').value;
+      const buttons = document.querySelectorAll('.filter-btn');
+      if (role === 'logistics') {
+        filterMap('corridor', buttons[2]);
+        map.setView([4.6600, -74.1250], 11);
+      } else {
+        filterMap('all', buttons[0]);
+        map.setView([4.6550, -74.0950], 11);
+      }
+    }
+
+    // 9. PRO MODAL
+    function openProModal() {
+      if (!isPro) {
+        const modal = document.getElementById('proModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+    }
+    function closeProModal() {
+      const modal = document.getElementById('proModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+    function activatePro() {
+      const corp = document.getElementById('corpName').value || 'Operador Logístico B2B';
+      isPro = true;
+      closeProModal();
+      const proBtn = document.getElementById('proBtn');
+      proBtn.className = 'bg-emerald-600 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 cursor-default';
+      document.getElementById('proBtnText').innerText = `Red Pro Activa (${corp})`;
+      document.getElementById('proBtnTextMobile').innerText = '20/20';
+      document.getElementById('pdf-client').innerText = corp;
+      map.setView([4.6750, -74.1250], 10);
+      renderMap();
+    }
+
+    // 10. LIVE TELEMETRY CHART & STREAM
+    const ctx = document.getElementById('telemetryChart').getContext('2d');
+    const telemetryChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['-50s', '-40s', '-30s', '-20s', '-10s', 'Vivo'],
+        datasets: [{
+          data: [690, 715, 705, 740, 760, 742],
+          borderColor: '#0ea5e9',
+          backgroundColor: 'rgba(14, 165, 233, 0.15)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
+          y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e293b' }, min: 600, max: 900 }
+        }
+      }
+    });
+
+    setInterval(() => {
+      const lat = (13.4 + Math.random() * 2.8).toFixed(1);
+      document.getElementById('kpi-latency').innerText = `${lat} ms`;
+
+      const mbps = Math.floor(680 + Math.random() * 160);
+      document.getElementById('live-mbps-label').innerText = `${mbps} Mbps`;
+      telemetryChart.data.datasets[0].data.shift();
+      telemetryChart.data.datasets[0].data.push(mbps);
+      telemetryChart.update('none');
+    }, 2500);
+
+    // 11. PDF CONSULTING REPORT
+    function exportConsultingPDF() {
+      document.getElementById('pdf-date').innerText = new Date().toLocaleDateString('es-CO');
+      document.getElementById('pdf-sla').innerText = document.getElementById('kpi-sla').innerText;
+      document.getElementById('pdf-cells').innerText = document.getElementById('kpi-cells').innerText;
+      document.getElementById('pdf-risk').innerText = document.getElementById('kpi-risk').innerText;
+
+      const tbody = document.getElementById('pdf-table-body');
+      tbody.innerHTML = '';
+      const activeCells = isPro ? [...baseMacroCells, ...proMacroCells] : baseMacroCells;
+
+      activeCells.forEach(c => {
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${c.id}</strong></td>
+            <td>${c.name}</td>
+            <td>${c.freq}</td>
+            <td>${c.eirp}</td>
+            <td>${(c.radius/1000).toFixed(1)} km</td>
+            <td>${c.rssi} dBm</td>
+            <td>Activo / Óptimo</td>
+          </tr>
+        `;
+      });
+
+      window.print();
+    }
+
+    // Initial Render
+    renderMap();
   </script>
-
 </body>
 </html>
