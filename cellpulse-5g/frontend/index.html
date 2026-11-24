@@ -1,779 +1,872 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CellPulse 5G | Enterprise NOC & Spatial Telemetry SaaS</title>
-  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CellPulse 5G | Enterprise NOC & Telemetría Bogotá</title>
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Leaflet CSS & JS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
+    * { box-sizing: border-box; }
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #090d16;
+      background-color: #060b16;
       color: #f8fafc;
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
     }
-    .font-display { font-family: 'Space Grotesk', sans-serif; }
-    .font-mono-tech { font-family: 'JetBrains Mono', monospace; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
 
-    /* Custom Scrollbar for NOC Sidebar */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #0f172a; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
-
-    /* Pulse marker for blind spots on logistics routes */
-    .pulse-warning {
-      width: 18px;
-      height: 18px;
-      background: #ef4444;
-      border: 2px solid #ffffff;
-      border-radius: 50%;
-      box-shadow: 0 0 0 rgba(239, 68, 68, 0.7);
-      animation: pulse-red 1.8s infinite;
+    /* Asegurar altura real del mapa */
+    #map-wrapper {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 178px);
+      min-height: 540px;
+      background-color: #0b1324;
     }
-    @keyframes pulse-red {
-      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.85); }
-      70% { transform: scale(1.1); box-shadow: 0 0 0 14px rgba(239, 68, 68, 0); }
-      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    #map {
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      background: #0b1324;
     }
 
-    /* Consulting PDF Print View */
-    #print-report { display: none; }
+    /* Scrollbar limpio para el panel lateral */
+    .custom-scroll::-webkit-scrollbar { width: 6px; }
+    .custom-scroll::-webkit-scrollbar-track { background: #090f1d; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #334155; }
+
+    /* Estilos de impresión para el Informe PDF */
     @media print {
-      body { background: #ffffff !important; color: #0f172a !important; overflow: visible !important; height: auto !important; }
-      #app-shell { display: none !important; }
-      #print-report { display: block !important; padding: 32px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-      th, td { border: 1px solid #cbd5e1; padding: 8px 10px; text-align: left; font-size: 12px; }
-      th { background: #f1f5f9; font-weight: 700; }
+      body * { visibility: hidden; }
+      #printable-report, #printable-report * { visibility: visible; }
+      #printable-report {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: white !important;
+        color: #0f172a !important;
+        padding: 24px;
+        z-index: 99999;
+      }
+      .no-print { display: none !important; }
     }
   </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden">
+<body class="flex flex-col min-h-screen">
 
-  <!-- MAIN APPLICATION SHELL -->
-  <div id="app-shell" class="h-full flex flex-col">
-
-    <!-- TOP HEADER -->
-    <header class="h-16 bg-slate-900 border-b border-slate-800 px-4 lg:px-6 flex items-center justify-between shrink-0 z-30">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
-          <i data-lucide="radio-tower" class="w-5 h-5 text-white"></i>
+  <!-- TOP NAVBAR -->
+  <header class="bg-[#0a1120] border-b border-slate-800/90 px-4 lg:px-6 py-3 flex flex-wrap items-center justify-between gap-3 z-30">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-lg font-extrabold tracking-tight text-white">CellPulse 5G</h1>
+          <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-sky-500/15 text-sky-400 border border-sky-500/30">
+            Enterprise NOC
+          </span>
         </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="font-display font-bold text-lg tracking-tight text-white">CellPulse 5G</h1>
-            <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-sky-500/15 text-sky-400 border border-sky-500/30">ENTERPRISE NOC</span>
-          </div>
-          <p class="text-[11px] text-slate-400 hidden sm:block">Cobertura Macro-Celular Bogotá D.C. &amp; Telemetría de Carga IoT</p>
+        <p class="text-xs text-slate-400">Cobertura Macro-Celular Bogotá D.C. & Telemetría Logística IoT</p>
+      </div>
+    </div>
+
+    <!-- BOTONES PRINCIPALES DE ACCIÓN -->
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button id="btn-toggle-pro" type="button"
+        class="px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-lg shadow-amber-500/20 transition cursor-pointer flex items-center gap-2">
+        <span id="pro-dot" class="w-2 h-2 rounded-full bg-slate-950"></span>
+        <span id="pro-btn-text">Activar Red Pro (20 Celdas)</span>
+      </button>
+
+      <button id="btn-export-report" type="button"
+        class="px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 transition cursor-pointer flex items-center gap-2">
+        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span>Informe QoS (PDF)</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- KPI EXECUTIVE BAR -->
+  <section class="bg-[#080e1c] border-b border-slate-800/80 px-4 lg:px-6 py-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 z-20">
+    <!-- KPI 1 -->
+    <div class="bg-[#0d1527] border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Disponibilidad SLA Bogotá</p>
+        <p id="kpi-sla" class="text-2xl font-extrabold text-white mt-0.5 font-mono">91.8%</p>
+      </div>
+      <span id="kpi-sla-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+        2 Zonas Críticas
+      </span>
+    </div>
+
+    <!-- KPI 2 -->
+    <div class="bg-[#0d1527] border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Latencia E2E (Banda n78)</p>
+        <p id="kpi-latency" class="text-2xl font-extrabold text-sky-400 mt-0.5 font-mono">14.2 ms</p>
+      </div>
+      <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> En Vivo
+      </span>
+    </div>
+
+    <!-- KPI 3 -->
+    <div class="bg-[#0d1527] border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between">
+      <div>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Macro-Celdas Activas</p>
+        <p id="kpi-cells" class="text-2xl font-extrabold text-white mt-0.5 font-mono">5 / 20</p>
+      </div>
+      <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-sky-500/15 text-sky-400 border border-sky-500/30">
+        Bogotá & Sabana
+      </span>
+    </div>
+
+    <!-- KPI 4 -->
+    <div class="bg-[#0d1527] border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between" title="Impacto financiero estimado en flotas de carga por pérdida de telemetría GPS/cadena de frío en zonas sin cobertura">
+      <div>
+        <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Riesgo Operativo Flotas / Hr</p>
+        <p id="kpi-risk" class="text-2xl font-extrabold text-amber-400 mt-0.5 font-mono">$2,150 USD</p>
+        <p id="kpi-risk-sub" class="text-[10px] text-slate-400 mt-0.5">Por corte GPS/IoT en puntos ciegos</p>
+      </div>
+      <span id="kpi-risk-badge" class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+        Alerta Carga
+      </span>
+    </div>
+  </section>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="flex-1 flex flex-col lg:flex-row">
+
+    <!-- SIDEBAR CONTROL PANEL -->
+    <aside class="w-full lg:w-[390px] xl:w-[420px] bg-[#090f1d] border-r border-slate-800/90 p-4 flex flex-col gap-4 lg:h-[calc(100vh-178px)] lg:overflow-y-auto custom-scroll">
+
+      <!-- 1. CAPAS DE COBERTURA -->
+      <div class="bg-[#0e172a] border border-slate-800 rounded-xl p-3.5">
+        <div class="flex items-center justify-between mb-2.5">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Capas de Cobertura Geoespacial</h2>
+          <span class="text-[11px] text-sky-400 font-mono">3.5 GHz n78</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2" id="layer-filters">
+          <button type="button" data-filter="all" class="filter-btn active-filter px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600 text-white border border-sky-500 transition cursor-pointer text-left">
+            Todas las Capas
+          </button>
+          <button type="button" data-filter="base" class="filter-btn px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700 transition cursor-pointer text-left">
+            Solo Celdas Base
+          </button>
+          <button type="button" data-filter="corridors" class="filter-btn px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700 transition cursor-pointer text-left">
+            Corredores Logísticos
+          </button>
+          <button type="button" data-filter="blindspots" class="filter-btn px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700 transition cursor-pointer text-left">
+            Puntos Ciegos SLA
+          </button>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 sm:gap-3">
-        <!-- Role Switcher -->
-        <select id="roleSelect" onchange="changeRole()" class="bg-slate-800 border border-slate-700 text-slate-100 text-xs sm:text-sm rounded-xl px-3 py-2 focus:outline-none focus:border-sky-500 cursor-pointer">
-          <option value="telecom">Rol: Ingeniero Telecomunicaciones</option>
-          <option value="logistics">Rol: Gerente Flota Logística</option>
-        </select>
-
-        <!-- Pro License Button -->
-        <button id="proBtn" onclick="openProModal()" class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 shadow-lg shadow-amber-500/20 transition cursor-pointer">
-          <i data-lucide="crown" class="w-4 h-4"></i>
-          <span id="proBtnText" class="hidden md:inline">Activar Red Pro (20 Celdas)</span>
-          <span id="proBtnTextMobile" class="md:hidden">Pro (20)</span>
+      <!-- 2. SIMULADOR DE INVERSIÓN CAPEX (WHAT-IF) -->
+      <div class="bg-gradient-to-br from-[#111936] to-[#0d1527] border border-indigo-500/35 rounded-xl p-3.5">
+        <div class="flex items-center justify-between mb-1.5">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-indigo-300">Simulador CAPEX (What-If)</h2>
+          <span id="sim-status-tag" class="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">Listo</span>
+        </div>
+        <p class="text-xs text-slate-300 leading-relaxed mb-3">
+          Simula el despliegue inmediato de 2 macro-celdas en <strong class="text-white">Ciudad Bolívar</strong> y <strong class="text-white">Autopista Sur (Bosa/Soacha)</strong> para eliminar cortes de telemetría en carga pesada.
+        </p>
+        <button id="btn-simulate-capex" type="button"
+          class="w-full py-2.5 px-3 rounded-lg font-bold text-xs bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/25 transition cursor-pointer flex items-center justify-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span id="sim-btn-text">Simular Despliegue Antenas Sur/Occidente</span>
         </button>
-
-        <!-- PDF Export Button -->
-        <button onclick="exportConsultingPDF()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 transition cursor-pointer">
-          <i data-lucide="file-text" class="w-4 h-4 text-sky-400"></i>
-          <span class="hidden sm:inline">Informe QoS</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- EXECUTIVE KPI RIBBON -->
-    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3 px-4 lg:px-6 py-3 bg-slate-950 border-b border-slate-800 shrink-0">
-      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-        <div>
-          <p class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Disponibilidad SLA Bogotá</p>
-          <h3 id="kpi-sla" class="font-mono-tech text-xl font-bold text-white mt-0.5">91.8%</h3>
+        <div id="sim-roi-box" class="hidden mt-2.5 p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-300">
+          <strong>Simulación Activa:</strong> +2 Nodos virtuales desplegados. Inversión estimada: $48,000 USD | Recuperación ROI: <strong>2.4 meses</strong>.
         </div>
-        <span id="kpi-sla-badge" class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30">2 Zonas Críticas</span>
       </div>
 
-      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-        <div>
-          <p class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Latencia E2E (Banda n78)</p>
-          <h3 id="kpi-latency" class="font-mono-tech text-xl font-bold text-sky-400 mt-0.5">14.8 ms</h3>
+      <!-- 3. GRÁFICO TRÁFICO AGREGADO BOGOTÁ -->
+      <div class="bg-[#0e172a] border border-slate-800 rounded-xl p-3.5">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Tráfico Agregado Bogotá (Mbps)</h2>
+          <span id="traffic-now" class="text-xs font-bold font-mono text-sky-400">742 Mbps</span>
         </div>
-        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-          <i data-lucide="activity" class="w-3.5 h-3.5"></i> En Vivo
-        </span>
+        <div class="relative h-36 w-full">
+          <canvas id="trafficChart"></canvas>
+        </div>
       </div>
 
-      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-        <div>
-          <p class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Macro-Celdas Activas</p>
-          <h3 id="kpi-cells" class="font-mono-tech text-xl font-bold text-white mt-0.5">5 / 20</h3>
+      <!-- 4. INVENTARIO DE NODOS (BUSCADOR + LISTA INTERACTIVA) -->
+      <div class="bg-[#0e172a] border border-slate-800 rounded-xl p-3.5">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300">Inventario de Nodos (20 Celdas)</h2>
+          <span id="inventory-count" class="text-[11px] font-semibold px-2 py-0.5 rounded bg-sky-500/15 text-sky-400">5 Activas</span>
         </div>
-        <span class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-sky-500/15 text-sky-400 border border-sky-500/30">Bogotá &amp; Sabana</span>
+
+        <form id="node-search-form" class="flex gap-1.5 mb-2.5">
+          <input id="node-search-input" type="text" placeholder="Ej: Soacha, Chía, CP-03..."
+            class="flex-1 bg-[#070d19] border border-slate-700 focus:border-sky-500 rounded-lg px-3 py-1.5 text-xs text-white placeholder-slate-500 outline-none" />
+          <button type="submit"
+            class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold transition cursor-pointer">
+            Ir
+          </button>
+          <button id="btn-clear-search" type="button" title="Limpiar filtro"
+            class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition cursor-pointer">
+            ✕
+          </button>
+        </form>
+
+        <div id="node-list" class="max-h-48 overflow-y-auto custom-scroll space-y-1.5 pr-1">
+          <!-- Se llena dinámicamente con JS -->
+        </div>
       </div>
 
-      <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
-        <div>
-          <p class="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">Riesgo Carga IoT / Hora</p>
-          <h3 id="kpi-risk" class="font-mono-tech text-xl font-bold text-amber-400 mt-0.5">$2,150 USD</h3>
+      <!-- 5. ALERTAS DE CONTINUIDAD & SLA -->
+      <div class="bg-[#0e172a] border border-slate-800 rounded-xl p-3.5">
+        <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Alertas de Continuidad & SLA</h2>
+        <div id="alerts-container" class="space-y-2">
+          <!-- Se actualiza dinámicamente -->
         </div>
-        <span id="kpi-risk-badge" class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-400 border border-amber-500/30">Pérdida Telemetría</span>
+      </div>
+
+    </aside>
+
+    <!-- MAP CONTAINER -->
+    <section id="map-wrapper" class="flex-1">
+      <div id="map"></div>
+
+      <!-- LEYENDA FLOTANTE -->
+      <div class="absolute bottom-5 right-5 z-[1000] bg-[#0a1120]/95 backdrop-blur-md border border-slate-700/80 rounded-xl p-3.5 shadow-2xl max-w-xs">
+        <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-300 mb-2">Convenciones Geoespaciales</h3>
+        <ul class="space-y-1.5 text-xs text-slate-300">
+          <li class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-sky-400 inline-block shadow shadow-sky-400/50"></span>
+            <span>Macro-Celda 5G Base (Radio 2.8 - 3.5 km)</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-violet-400 inline-block shadow shadow-violet-400/50"></span>
+            <span>Macro-Celda Pro Expandida (Alta Capacidad)</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-400 inline-block shadow shadow-emerald-400/50"></span>
+            <span>Antena Simulada CAPEX (What-If)</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="w-4 h-1 bg-emerald-400 inline-block rounded"></span>
+            <span>Corredor Logístico con Señal Óptima</span>
+          </li>
+          <li class="flex items-center gap-2">
+            <span class="w-4 h-0 border-t-2 border-dashed border-rose-500 inline-block"></span>
+            <span>Tramo Crítico / Pérdida Telemetría IoT</span>
+          </li>
+        </ul>
       </div>
     </section>
 
-    <!-- WORKSPACE: SIDEBAR + MAP -->
-    <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+  </main>
 
-      <!-- LEFT CONTROL SIDEBAR -->
-      <aside class="w-full lg:w-[390px] bg-slate-900 border-r border-slate-800 p-4 flex flex-col gap-4 overflow-y-auto shrink-0 max-h-[42vh] lg:max-h-full">
-
-        <!-- Layer Filters -->
-        <div>
-          <div class="flex items-center justify-between mb-2">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Capas de Cobertura Bogotá</h4>
-            <i data-lucide="layers" class="w-4 h-4 text-slate-400"></i>
+  <!-- MODAL / SECCIÓN OCULTA PARA INFORME QOS PDF -->
+  <div id="report-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[5000] hidden items-center justify-center p-4 no-print">
+    <div class="bg-white text-slate-900 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8">
+      <div id="printable-report">
+        <div class="flex flex-wrap justify-between items-start border-b-2 border-slate-200 pb-4 mb-5 gap-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-sky-600">Auditoría Técnica de Red 5G</span>
+            <h2 class="text-2xl font-extrabold text-slate-900 mt-1">Informe Ejecutivo de Cobertura & QoS</h2>
+            <p class="text-sm text-slate-500">Plataforma CellPulse 5G Enterprise NOC — Región Bogotá D.C. & Sabana</p>
           </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="filterMap('all', this)" class="filter-btn active bg-sky-500/15 border border-sky-500 text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer">
-              Vista Completa Bogotá
-            </button>
-            <button onclick="filterMap('5g', this)" class="filter-btn bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer">
-              Macro-Celdas 5G n78
-            </button>
-            <button onclick="filterMap('corridor', this)" class="filter-btn bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer">
-              Corredores Logísticos
-            </button>
-            <button onclick="filterMap('blind', this)" class="filter-btn bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer">
-              Zonas Sin Cobertura
-            </button>
+          <div class="text-right text-xs text-slate-500 font-mono">
+            <p id="rep-date">Fecha: --</p>
+            <p>Banda: 3.5 GHz (n78)</p>
+            <p>Estándar: 3GPP Rel-16 / CNCF</p>
           </div>
         </div>
 
-        <!-- LOGISTICS CORRIDOR EXPLANATION CARD (Crystal Clear B2B Value) -->
-        <div class="bg-slate-800/70 border border-emerald-500/30 rounded-xl p-3.5">
-          <div class="flex items-center justify-between mb-1.5">
-            <h5 class="text-xs font-bold text-emerald-400 flex items-center gap-1.5 uppercase tracking-wide">
-              <i data-lucide="truck" class="w-4 h-4"></i> ¿Qué mide el Corredor Logístico?
-            </h5>
-            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-semibold">Telemetría Flota</span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div class="bg-slate-100 p-3 rounded-lg">
+            <p class="text-[11px] font-bold text-slate-500 uppercase">Disponibilidad SLA</p>
+            <p id="rep-sla" class="text-xl font-extrabold text-slate-900 mt-1">91.8%</p>
           </div>
-          <p class="text-xs text-slate-300 leading-relaxed mb-2.5">
-            Audita la continuidad de señal 5G en las rutas de transporte pesado (<strong>Calle 80 - Siberia</strong> y <strong>Autopista Sur</strong>) para garantizar rastreo GPS en vivo, cadena de frío y seguridad de carga:
-          </p>
-          <div class="space-y-1.5 text-[11px]">
-            <div class="flex items-center gap-2 text-slate-200">
-              <span class="w-5 h-1.5 bg-emerald-400 rounded-full inline-block"></span>
-              <span><strong>Tramo Verde (Óptimo):</strong> Dentro del radio EIRP; GPS y sensores IoT activos sin cortes.</span>
-            </div>
-            <div class="flex items-center gap-2 text-slate-200">
-              <span class="w-5 h-1.5 border-b-2 border-dashed border-rose-500 inline-block"></span>
-              <span><strong>Tramo Rojo (Punto Ciego):</strong> Pérdida de paquete (&gt;120ms); riesgo de robo o falla de refrigeración.</span>
-            </div>
+          <div class="bg-slate-100 p-3 rounded-lg">
+            <p class="text-[11px] font-bold text-slate-500 uppercase">Celdas Activas</p>
+            <p id="rep-cells" class="text-xl font-extrabold text-slate-900 mt-1">5 / 20</p>
+          </div>
+          <div class="bg-slate-100 p-3 rounded-lg">
+            <p class="text-[11px] font-bold text-slate-500 uppercase">Latencia Promedio</p>
+            <p id="rep-latency" class="text-xl font-extrabold text-sky-600 mt-1">14.2 ms</p>
+          </div>
+          <div class="bg-slate-100 p-3 rounded-lg">
+            <p class="text-[11px] font-bold text-slate-500 uppercase">Riesgo Carga/Hr</p>
+            <p id="rep-risk" class="text-xl font-extrabold text-amber-600 mt-1">$2,150 USD</p>
           </div>
         </div>
 
-        <!-- WHAT-IF CAPEX SIMULATOR -->
-        <div class="bg-gradient-to-b from-indigo-950/60 to-slate-900 border border-indigo-500/40 rounded-xl p-3.5">
-          <h5 class="text-xs font-bold text-indigo-300 flex items-center gap-1.5 uppercase tracking-wide mb-1">
-            <i data-lucide="sparkles" class="w-4 h-4"></i> Simulador Inversión CAPEX ("What-If")
-          </h5>
-          <p class="text-xs text-slate-300 leading-relaxed mb-3">
-            Simula el despliegue de 2 macro-celdas de refuerzo en <strong>Ciudad Bolívar</strong> y <strong>Kennedy/Autopista Sur</strong> para cerrar las brechas de los corredores logísticos:
-          </p>
-          <button id="simBtn" onclick="toggleCapexSimulation()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/25 transition cursor-pointer">
-            <i data-lucide="plus-circle" class="w-4 h-4"></i>
-            <span>Simular Despliegue Antenas Sur/Occidente</span>
-          </button>
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-700 mb-2">Detalle de Macro-Celdas Operativas</h3>
+        <div class="overflow-x-auto border border-slate-200 rounded-lg mb-5">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 text-slate-700 font-bold">
+              <tr>
+                <th class="p-2.5">ID Nodo</th>
+                <th class="p-2.5">Sector / Ubicación</th>
+                <th class="p-2.5">Nivel</th>
+                <th class="p-2.5">EIRP</th>
+                <th class="p-2.5">Radio</th>
+                <th class="p-2.5">Tráfico</th>
+              </tr>
+            </thead>
+            <tbody id="rep-table-body" class="divide-y divide-slate-200">
+            </tbody>
+          </table>
         </div>
 
-        <!-- LIVE TELEMETRY CHART -->
-        <div class="bg-slate-800/60 border border-slate-700/80 rounded-xl p-3">
-          <div class="flex items-center justify-between mb-2">
-            <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Tráfico Agregado Bogotá (Mbps)</h4>
-            <span class="text-[11px] font-mono-tech text-sky-400" id="live-mbps-label">742 Mbps</span>
-          </div>
-          <canvas id="telemetryChart" height="100"></canvas>
-        </div>
-
-        <!-- NODE INVENTORY SEARCH & QUICK LIST (20 MACRO-CELLS) -->
-        <div class="bg-slate-800/60 border border-slate-700/80 rounded-xl p-3">
-          <div class="flex items-center justify-between mb-2">
-            <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Inventario de Nodos (20 Celdas)</h4>
-            <span id="inventory-count-badge" class="text-[10px] font-mono-tech text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded-full">5 Activas</span>
-          </div>
-          <div class="relative mb-2">
-            <input type="text" id="nodeSearchInput" onkeyup="renderNodeList()" placeholder="Buscar localidad, ID (ej. CP-14, Chía, Soacha)..." class="w-full bg-slate-950 border border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500">
-            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2"></i>
-          </div>
-          <div id="node-inventory-list" class="max-h-40 overflow-y-auto space-y-1.5 pr-1"></div>
-        </div>
-
-        <!-- ACTIVE ALERTS -->
-        <div>
-          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Alertas de Continuidad &amp; SLA</h4>
-          <div class="space-y-2" id="alerts-container">
-            <div id="alert-sur" class="bg-rose-500/10 border-l-4 border-rose-500 rounded-r-xl p-2.5 text-xs">
-              <p class="font-bold text-rose-300">Corte en Corredor Autopista Sur (Bosa/Soacha)</p>
-              <p class="text-slate-400 text-[11px] mt-0.5">RSSI -114 dBm. 18 camiones sin reporte telemétrico en tiempo real.</p>
-            </div>
-            <div id="alert-cb" class="bg-rose-500/10 border-l-4 border-rose-500 rounded-r-xl p-2.5 text-xs">
-              <p class="font-bold text-rose-300">Punto Ciego Macro: Ciudad Bolívar Alta</p>
-              <p class="text-slate-400 text-[11px] mt-0.5">Sombra orográfica sin cobertura 3.5 GHz. Impacto SLA urbano.</p>
-            </div>
-          </div>
-        </div>
-
-      </aside>
-
-      <!-- INTERACTIVE BOGOTÁ MAP -->
-      <main class="flex-1 relative bg-slate-950">
-        <div id="map" class="w-full h-full z-10"></div>
-
-        <!-- FLOATING MAP LEGEND -->
-        <div class="absolute bottom-5 right-5 z-20 bg-slate-900/95 backdrop-blur-md border border-slate-700 rounded-2xl p-3.5 shadow-2xl max-w-xs">
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Convenciones Geoespaciales</p>
-          <div class="space-y-1.5 text-xs text-slate-200">
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-sky-500 inline-block shrink-0"></span>
-              <span>Macro-Celda 5G Base (Radio 2.6 - 3.5 km)</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="w-3 h-3 rounded-full bg-violet-500 inline-block shrink-0"></span>
-              <span>Macro-Celda Pro Expandida (Alta Capacidad)</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="w-4 h-1 bg-emerald-400 inline-block shrink-0"></span>
-              <span>Corredor Logístico con Señal Óptima</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="w-4 h-0.5 border-b-2 border-dashed border-rose-500 inline-block shrink-0"></span>
-              <span>Tramo Crítico / Pérdida Telemetría IoT</span>
-            </div>
-          </div>
-        </div>
-      </main>
-
-    </div>
-  </div>
-
-  <!-- PRO SUBSCRIPTION MODAL -->
-  <div id="proModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
-          <i data-lucide="crown" class="w-5 h-5"></i>
-        </div>
-        <div>
-          <h3 class="font-display font-bold text-lg text-white">Desbloquear Red Macro-Celular Pro (20 Nodos)</h3>
-          <p class="text-xs text-slate-400">Cobertura total Bogotá D.C., Chía, Funza, Mosquera y Soacha</p>
+        <div class="bg-sky-50 border border-sky-200 rounded-lg p-3.5 text-xs text-slate-700">
+          <strong>Conclusión de Ingeniería:</strong> Los cálculos geoespaciales basados en Potencia Radiada Isotrópica Equivalente (EIRP) en banda n78 confirman continuidad de servicio en los ejes troncales activos. Se recomienda mantener habilitada la topología Pro o ejecutar expansión CAPEX en el corredor Autopista Sur para garantizar SLA > 99.5% en transporte de carga.
         </div>
       </div>
-      <p class="text-xs text-slate-300 leading-relaxed mb-4">
-        Activa las <strong>15 macro-celdas Enterprise Pro adicionales</strong> (20 nodos en total) para cubrir toda el área metropolitana, parques industriales de Sabana Occidente, Norte y Sur.
-      </p>
-      <div class="space-y-3 mb-5">
-        <div>
-          <label class="block text-xs text-slate-400 mb-1">Empresa / Operador B2B</label>
-          <input type="text" id="corpName" placeholder="Ej. Transportes & Logística Bogotá S.A.S." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500">
-        </div>
-        <div>
-          <label class="block text-xs text-slate-400 mb-1">Correo Corporativo</label>
-          <input type="email" id="corpEmail" placeholder="operaciones@empresa.com.co" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-sky-500">
-        </div>
-      </div>
-      <div class="flex justify-end gap-2">
-        <button onclick="closeProModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer">Cancelar</button>
-        <button onclick="activatePro()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-semibold cursor-pointer">Activar 20 Macro-Celdas</button>
+
+      <div class="mt-6 flex justify-end gap-3 no-print">
+        <button id="btn-close-report" type="button" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-sm font-semibold cursor-pointer">
+          Cerrar
+        </button>
+        <button id="btn-print-pdf" type="button" class="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow cursor-pointer">
+          Imprimir / Guardar PDF
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- EXECUTIVE PDF CONSULTING REPORT -->
-  <div id="print-report">
-    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #0f172a; padding-bottom:12px;">
-      <div>
-        <h1 style="font-size:22px; font-weight:700; margin:0;">INFORME EJECUTIVO DE COBERTURA 5G &amp; CORREDORES LOGÍSTICOS</h1>
-        <p style="font-size:12px; color:#475569; margin:4px 0 0 0;">Plataforma CellPulse 5G Enterprise NOC | Bogotá D.C., Colombia</p>
-      </div>
-      <div style="text-align:right; font-size:12px;">
-        <strong>Fecha:</strong> <span id="pdf-date"></span><br>
-        <strong>Cliente:</strong> <span id="pdf-client">Auditoría Corporativa Bogotá</span>
-      </div>
-    </div>
+  <!-- SCRIPTS: Leaflet y Chart.js con carga segura -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-    <div style="margin-top:16px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #cbd5e1; font-size:13px;">
-      <strong>Resumen Ejecutivo de Indicadores:</strong><br>
-      • Disponibilidad SLA Ciudad: <strong id="pdf-sla">91.8%</strong> |
-      • Macro-Celdas Activas: <strong id="pdf-cells">5 / 20</strong> |
-      • Riesgo Financiero en Ruta: <strong id="pdf-risk">$2,150 USD/hr</strong>
-    </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // ==========================================
+      // 1. DATOS DE LAS 20 MACRO-CELDAS + SIMULADAS
+      // ==========================================
+      const cellsData = [
+        // 5 CELDAS BASE (Activas por defecto)
+        { id: 'CP-01', name: 'Centro Internacional', zone: 'Santa Fe / Centro', lat: 4.6155, lng: -74.0695, tier: 'base', eirp: '62 dBm', radius: 3200, throughput: 168, latency: 13.4 },
+        { id: 'CP-02', name: 'Chapinero Alto', zone: 'Chapinero', lat: 4.6485, lng: -74.0620, tier: 'base', eirp: '62 dBm', radius: 3000, throughput: 154, latency: 14.1 },
+        { id: 'CP-03', name: 'Ciudad Salitre', zone: 'Teusaquillo / Salitre', lat: 4.6540, lng: -74.1050, tier: 'base', eirp: '63 dBm', radius: 3300, throughput: 162, latency: 13.8 },
+        { id: 'CP-04', name: 'Portal Calle 80', zone: 'Engativá', lat: 4.7095, lng: -74.1110, tier: 'base', eirp: '62 dBm', radius: 3100, throughput: 138, latency: 15.0 },
+        { id: 'CP-05', name: 'Zona Industrial Puente Aranda', zone: 'Puente Aranda', lat: 4.6260, lng: -74.1130, tier: 'base', eirp: '61 dBm', radius: 2900, throughput: 120, latency: 14.7 },
 
-    <table>
-      <thead>
-        <tr>
-          <th>ID Nodo</th>
-          <th>Localidad / Sector Bogotá</th>
-    // 1. INITIALIZE BOGOTÁ METROPOLITAN MAP (Centered to cover Bogotá + Chía, Funza, Mosquera, Soacha)
-    const map = L.map('map', { zoomControl: true }).setView([4.6550, -74.1150], 11);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap &copy; CARTO',
-      maxZoom: 18
-    }).addTo(map);
+        // 15 CELDAS PRO (Se activan con el botón PRO)
+        { id: 'CP-06', name: 'Usaquén Santa Bárbara', zone: 'Usaquén', lat: 4.6960, lng: -74.0330, tier: 'pro', eirp: '64 dBm', radius: 3400, throughput: 195, latency: 11.8 },
+        { id: 'CP-07', name: 'Toberín Autopista Norte', zone: 'Usaquén Norte', lat: 4.7460, lng: -74.0450, tier: 'pro', eirp: '64 dBm', radius: 3500, throughput: 188, latency: 12.1 },
+        { id: 'CP-08', name: 'Suba Centro & Niza', zone: 'Suba', lat: 4.7410, lng: -74.0840, tier: 'pro', eirp: '63 dBm', radius: 3300, throughput: 182, latency: 12.4 },
+        { id: 'CP-09', name: 'Suba Tibabuyes', zone: 'Suba Occidente', lat: 4.7480, lng: -74.1160, tier: 'pro', eirp: '63 dBm', radius: 3200, throughput: 171, latency: 12.9 },
+        { id: 'CP-10', name: 'Nodo Sabana Chía', zone: 'Chía (Sabana Norte)', lat: 4.8615, lng: -74.0585, tier: 'pro', eirp: '65 dBm', radius: 3800, throughput: 210, latency: 11.5 },
+        { id: 'CP-11', name: 'Aeropuerto El Dorado', zone: 'Fontibón', lat: 4.6980, lng: -74.1420, tier: 'pro', eirp: '65 dBm', radius: 3600, throughput: 230, latency: 10.9 },
+        { id: 'CP-12', name: 'Parque Industrial Siberia', zone: 'Cota / Calle 80', lat: 4.7420, lng: -74.1780, tier: 'pro', eirp: '64 dBm', radius: 3700, throughput: 204, latency: 11.7 },
+        { id: 'CP-13', name: 'Hub Logístico Funza', zone: 'Funza (Sabana Occ.)', lat: 4.7160, lng: -74.2120, tier: 'pro', eirp: '64 dBm', radius: 3600, throughput: 192, latency: 12.2 },
+        { id: 'CP-14', name: 'Zona Franca Mosquera', zone: 'Mosquera (Sabana Occ.)', lat: 4.7050, lng: -74.2310, tier: 'pro', eirp: '64 dBm', radius: 3500, throughput: 189, latency: 12.3 },
+        { id: 'CP-15', name: 'Corabastos & Américas', zone: 'Kennedy', lat: 4.6290, lng: -74.1550, tier: 'pro', eirp: '64 dBm', radius: 3400, throughput: 205, latency: 11.9 },
+        { id: 'CP-16', name: 'Bosa Centro & El Recreo', zone: 'Bosa', lat: 4.6120, lng: -74.1880, tier: 'pro', eirp: '63 dBm', radius: 3300, throughput: 176, latency: 12.6 },
+        { id: 'CP-17', name: 'Soacha Autopista Sur', zone: 'Soacha', lat: 4.5810, lng: -74.2170, tier: 'pro', eirp: '65 dBm', radius: 3700, throughput: 215, latency: 11.4 },
+        { id: 'CP-18', name: 'San Cristóbal & 20 de Julio', zone: 'San Cristóbal', lat: 4.5730, lng: -74.0880, tier: 'pro', eirp: '63 dBm', radius: 3100, throughput: 164, latency: 13.0 },
+        { id: 'CP-19', name: 'Usme Santa Librada', zone: 'Usme', lat: 4.5180, lng: -74.1150, tier: 'pro', eirp: '63 dBm', radius: 3300, throughput: 158, latency: 13.2 },
+        { id: 'CP-20', name: 'Ciudad Bolívar Mirador', zone: 'Ciudad Bolívar', lat: 4.5650, lng: -74.1560, tier: 'pro', eirp: '64 dBm', radius: 3400, throughput: 179, latency: 12.5 }
+      ];
 
-    let isPro = false;
-    let isSimulated = false;
-    let currentFilter = 'all';
-    let layerGroup = L.layerGroup().addTo(map);
+      // 2 CELDAS SIMULADAS CAPEX (What-If)
+      const capexCellsData = [
+        { id: 'SIM-01', name: 'CAPEX Ciudad Bolívar Alta', zone: 'Ciudad Bolívar (Sim)', lat: 4.5580, lng: -74.1520, tier: 'sim', eirp: '64 dBm', radius: 3500, throughput: 185, latency: 12.0 },
+        { id: 'SIM-02', name: 'CAPEX Autopista Sur / Bosa', zone: 'Soacha - Bosa (Sim)', lat: 4.5930, lng: -74.1980, tier: 'sim', eirp: '65 dBm', radius: 3600, throughput: 198, latency: 11.6 }
+      ];
 
-    // 2. EXPANDED 20 STRATEGIC MACRO-CELLS ACROSS BOGOTÁ & SABANA (5 Base + 15 Enterprise Pro)
-    const baseMacroCells = [
-      { id: 'CP-01', name: 'Centro Internacional & Teusaquillo', lat: 4.6220, lng: -74.0720, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -61, radius: 2900, type: '5g', pro: false },
-      { id: 'CP-02', name: 'Chapinero Financiero & Calle 72', lat: 4.6580, lng: -74.0580, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -58, radius: 2800, type: '5g', pro: false },
-      { id: 'CP-03', name: 'Salitre & Avenida El Dorado', lat: 4.6620, lng: -74.1050, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -59, radius: 3200, type: '5g', pro: false },
-      { id: 'CP-04', name: 'Engativá & Portal Calle 80', lat: 4.7060, lng: -74.1120, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -63, radius: 3100, type: '5g', pro: false },
-      { id: 'CP-05', name: 'Puente Aranda Zona Industrial', lat: 4.6280, lng: -74.1140, freq: '700 MHz (n28)', eirp: '63 dBm (2.0 kW)', rssi: -66, radius: 3400, type: '4g', pro: false }
-    ];
+      // Estado global de la aplicación
+      let state = {
+        proEnabled: false,
+        capexSimulated: false,
+        activeFilter: 'all',
+        searchQuery: ''
+      };
 
-    const proMacroCells = [
-      { id: 'CP-06', name: 'Usaquén & Calle 127 Norte', lat: 4.7040, lng: -74.0350, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -60, radius: 3300, type: '5g', pro: true },
-      { id: 'CP-07', name: 'Suba Centro & Av. Cali Norte', lat: 4.7420, lng: -74.0880, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -62, radius: 3500, type: '5g', pro: true },
-      { id: 'CP-08', name: 'Fontibón & Aeropuerto El Dorado', lat: 4.6920, lng: -74.1480, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -57, radius: 3500, type: '5g', pro: true },
-      { id: 'CP-09', name: 'Parque Logístico Siberia (Calle 80 Occ.)', lat: 4.7320, lng: -74.1560, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -64, radius: 3400, type: '5g', pro: true },
-      { id: 'CP-10', name: 'Kennedy Central & Corabastos', lat: 4.6250, lng: -74.1560, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -63, radius: 3200, type: '5g', pro: true },
-      { id: 'CP-11', name: 'Chía Centro & Variante Norte', lat: 4.8580, lng: -74.0580, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -61, radius: 3800, type: '5g', pro: true },
-      { id: 'CP-12', name: 'Autopista Norte & Calle 170 (Toberín)', lat: 4.7560, lng: -74.0450, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -59, radius: 3300, type: '5g', pro: true },
-      { id: 'CP-13', name: 'Suba Tibabuyes & Lisboa Occidente', lat: 4.7450, lng: -74.1220, freq: '700 MHz (n28)', eirp: '64 dBm (2.5 kW)', rssi: -65, radius: 3200, type: '4g', pro: true },
-      { id: 'CP-14', name: 'Funza Zona Franca & Parque Industrial', lat: 4.7160, lng: -74.2120, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -60, radius: 3700, type: '5g', pro: true },
-      { id: 'CP-15', name: 'Mosquera & Corredor Calle 13 Carga', lat: 4.7020, lng: -74.2280, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -62, radius: 3600, type: '5g', pro: true },
-      { id: 'CP-16', name: 'Bosa Recreo & El Porvenir', lat: 4.6180, lng: -74.1920, freq: '700 MHz (n28)', eirp: '64 dBm (2.5 kW)', rssi: -64, radius: 3100, type: '4g', pro: true },
-      { id: 'CP-17', name: 'Soacha Centro & Terreros Industrial', lat: 4.5820, lng: -74.2150, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -61, radius: 3600, type: '5g', pro: true },
-      { id: 'CP-18', name: 'San Cristóbal & Avenida 1ro de Mayo', lat: 4.5740, lng: -74.0880, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -63, radius: 3000, type: '5g', pro: true },
-      { id: 'CP-19', name: 'Usme Centro & Portal Almirante Padilla', lat: 4.5180, lng: -74.1180, freq: '700 MHz (n28)', eirp: '64 dBm (2.5 kW)', rssi: -66, radius: 3500, type: '4g', pro: true },
-      { id: 'CP-20', name: 'Santa Fe, La Candelaria & Monserrate', lat: 4.6020, lng: -74.0650, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -58, radius: 2800, type: '5g', pro: true }
-    ];
+      // ==========================================
+      // 2. INICIALIZACIÓN SEGURA DEL MAPA LEAFLET
+      // ==========================================
+      const map = L.map('map', {
+        center: [4.6450, -74.1150],
+        zoom: 11,
+        zoomControl: true
+      });
 
-    const proMacroCells = [
-      { id: 'CP-06', name: 'Usaquén & Calle 127 Norte', lat: 4.7040, lng: -74.0350, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -60, radius: 3300, type: '5g', pro: true },
-      { id: 'CP-07', name: 'Suba Centro & Av. Cali Norte', lat: 4.7420, lng: -74.0880, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -62, radius: 3600, type: '5g', pro: true },
-      { id: 'CP-08', name: 'Fontibón & Aeropuerto El Dorado', lat: 4.6920, lng: -74.1480, freq: '3.5 GHz (n78)', eirp: '66 dBm (4.0 kW)', rssi: -57, radius: 3500, type: '5g', pro: true },
-      { id: 'CP-09', name: 'Parque Logístico Siberia (Calle 80 Occ.)', lat: 4.7320, lng: -74.1560, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -64, radius: 3400, type: '5g', pro: true },
-      { id: 'CP-10', name: 'Kennedy Central & Corabastos', lat: 4.6250, lng: -74.1560, freq: '3.5 GHz (n78)', eirp: '65 dBm (3.1 kW)', rssi: -63, radius: 3200, type: '5g', pro: true }
-    ];
+      // Capa base oscura CartoDB Dark Matter (con fallback a OpenStreetMap si falla)
+      const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 19
+      });
 
-    // 3. TWO CLEAR LOGISTICS CORRIDORS (Optimal Green Segment + Blind Spot Red Dashed Segment)
-    // Corridor 1: Calle 80 Freight Corridor (From Heroes/Autonorte to Siberia Industrial Park)
-    const calle80Optimal = [
-      [4.6685, -74.0595],
-      [4.6840, -74.0790],
-      [4.6980, -74.0980],
-      [4.7110, -74.1180]
-    ];
-    const calle80BlindSegment = [
-      [4.7110, -74.1180],
-      [4.7240, -74.1390],
-      [4.7360, -74.1620] // Siberia Toll / Bridge gap when Pro is off
-    ];
+      darkTiles.on('tileerror', () => {
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap'
+        }).addTo(map);
+      });
 
-    // Corridor 2: Autopista Sur Freight Corridor (From Muzú/NQS to Bosa/Soacha border)
-    const autoSurOptimal = [
-      [4.6090, -74.1050],
-      [4.5990, -74.1220]
-    ];
-    const autoSurBlindSegment = [
-      [4.5990, -74.1220],
-      [4.5880, -74.1450],
-      [4.5780, -74.1680] // Severe blind spot in Bosa / Autopista Sur
-    ];
+      darkTiles.addTo(map);
 
-    // 4. RENDER MAP LAYERS
-    function renderMap(filter = currentFilter) {
-      currentFilter = filter;
-      layerGroup.clearLayers();
-      const activeCells = isPro ? [...baseMacroCells, ...proMacroCells] : baseMacroCells;
+      // Forzar recalculo de tamaño tras montar el DOM
+      setTimeout(() => { map.invalidateSize(); }, 250);
+      window.addEventListener('resize', () => map.invalidateSize());
 
-      // A. Draw Macro-Cell Coverage Circles + Center Tower Markers
-      if (filter === 'all' || filter === '5g') {
-        activeCells.forEach(cell => {
-          if (filter === '5g' && cell.type !== '5g') return;
-          const color = cell.pro ? '#8b5cf6' : '#0ea5e9';
+      // Grupos de capas en el mapa
+      const cellsLayerGroup = L.layerGroup().addTo(map);
+      const corridorsLayerGroup = L.layerGroup().addTo(map);
+      const blindspotsLayerGroup = L.layerGroup().addTo(map);
 
-          // Coverage Footprint Circle
-          L.circle([cell.lat, cell.lng], {
-            color: color,
-            fillColor: color,
-            fillOpacity: 0.16,
-            radius: cell.radius,
-            weight: 1.8
-          }).bindTooltip(`
-            <div style="font-family:Inter,sans-serif; font-size:12px; line-height:1.4;">
-              <strong style="color:${color};">${cell.id} • ${cell.name}</strong><br>
-              Banda: <b>${cell.freq}</b> | EIRP: <b>${cell.eirp}</b><br>
-              Radio Efectivo: <b>${(cell.radius/1000).toFixed(1)} km</b> | RSSI: <b>${cell.rssi} dBm</b>
-            </div>
-          `).addTo(layerGroup);
+      // Diccionario para volar hacia una antena al hacer clic en el inventario
+      let cellMarkersMap = {};
 
-          // Tower Center Node Dot
-          L.circleMarker([cell.lat, cell.lng], {
-            radius: 5,
-            color: '#ffffff',
-            weight: 1.5,
-            fillColor: color,
-            fillOpacity: 1
-          }).addTo(layerGroup);
+      // ==========================================
+      // 3. GRÁFICO CHART.JS EN VIVO
+      // ==========================================
+      let trafficChart = null;
+      const chartCanvas = document.getElementById('trafficChart');
+      if (chartCanvas && typeof Chart !== 'undefined') {
+        const ctx = chartCanvas.getContext('2d');
+        trafficChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: ['12:00', '13:00', '14:00', '15:00', '16:00', '17:00', 'Ahora'],
+            datasets: [{
+              label: 'Throughput (Mbps)',
+              data: [610, 645, 690, 675, 710, 728, 742],
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.14)',
+              borderWidth: 2.5,
+              tension: 0.35,
+              fill: true,
+              pointRadius: 3,
+              pointBackgroundColor: '#38bdf8'
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { color: 'rgba(148,163,184,0.08)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+              y: { grid: { color: 'rgba(148,163,184,0.08)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+            }
+          }
         });
       }
 
-      // B. Draw Logistics Corridors (Crystal Clear Optimal vs Blind Spot Segments)
-      if (filter === 'all' || filter === 'corridor') {
-        // Calle 80 Optimal Green Segment
-        L.polyline(calle80Optimal, {
-          color: '#10b981',
-          weight: 6,
-          opacity: 0.9
-        }).bindTooltip(`
-          <strong>Corredor Carga Calle 80 (Tramo Urbano)</strong><br>
-          Estado: <span style="color:#10b981;font-weight:bold;">ÓPTIMO (100% Telemetría GPS/IoT)</span><br>
-          Cobertura sostenida por nodos CP-03 y CP-04.
-        `).addTo(layerGroup);
+      // ==========================================
+      // 4. FUNCIONES DE RENDERIZADO INTEGRAL
+      // ==========================================
+      function getActiveCells() {
+        let list = cellsData.filter(c => c.tier === 'base' || (state.proEnabled && c.tier === 'pro'));
+        if (state.capexSimulated) {
+          list = list.concat(capexCellsData);
+        }
+        return list;
+      }
 
-        // Calle 80 Western Segment (Covered if Pro CP-09 is active, otherwise Blind Spot!)
-        if (isPro) {
-          L.polyline(calle80BlindSegment, {
-            color: '#10b981',
-            weight: 6,
-            opacity: 0.9
-          }).bindTooltip(`<strong>Corredor Calle 80 - Siberia</strong><br>Cubierto por Macro-Celda Pro CP-09.`).addTo(layerGroup);
-        } else {
-          L.polyline(calle80BlindSegment, {
-            color: '#ef4444',
-            weight: 6,
-            dashArray: '10, 8',
-            opacity: 0.95
-          }).bindTooltip(`
-            <strong>⚠️ Punto Ciego Logístico: Salida Calle 80 - Siberia</strong><br>
-            Pérdida de señal 5G en zona de parques industriales.<br>
-            <em>Activa Red Pro para cubrir este tramo.</em>
-          `).addTo(layerGroup);
+      function renderMapLayers() {
+        cellsLayerGroup.clearLayers();
+        corridorsLayerGroup.clearLayers();
+        blindspotsLayerGroup.clearLayers();
+        cellMarkersMap = {};
+
+        const activeCells = getActiveCells();
+        const isGapCovered = state.proEnabled || state.capexSimulated;
+
+        // A) Dibujar Celdas Activas (si el filtro lo permite)
+        if (state.activeFilter === 'all' || state.activeFilter === 'base') {
+          activeCells.forEach(cell => {
+            if (state.activeFilter === 'base' && cell.tier !== 'base') return;
+
+            let color = '#38bdf8'; // Base (Sky)
+            let tierLabel = 'Macro-Celda Base';
+            if (cell.tier === 'pro') { color = '#a78bfa'; tierLabel = 'Enterprise Pro'; }
+            if (cell.tier === 'sim') { color = '#34d399'; tierLabel = 'Simulación CAPEX'; }
+
+            const circle = L.circle([cell.lat, cell.lng], {
+              radius: cell.radius,
+              color: color,
+              weight: 1.5,
+              fillColor: color,
+              fillOpacity: 0.16
+            });
+
+            const marker = L.circleMarker([cell.lat, cell.lng], {
+              radius: 7,
+              color: '#ffffff',
+              weight: 1.5,
+              fillColor: color,
+              fillOpacity: 1
+            });
+
+            const popupHtml = `
+              <div style="font-family: Inter, sans-serif; color: #0f172a; min-width: 190px;">
+                <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #0284c7;">${cell.id} • ${tierLabel}</div>
+                <div style="font-size: 14px; font-weight: 800; margin: 2px 0;">${cell.name}</div>
+                <div style="font-size: 11px; color: #475569; margin-bottom: 6px;">Sector: ${cell.zone}</div>
+                <div style="font-size: 11px; background: #f1f5f9; padding: 6px; border-radius: 6px;">
+                  <strong>EIRP:</strong> ${cell.eirp} | <strong>Radio:</strong> ${(cell.radius/1000).toFixed(1)} km<br/>
+                  <strong>Tráfico:</strong> ${cell.throughput} Mbps | <strong>Latencia:</strong> ${cell.latency} ms
+                </div>
+              </div>
+            `;
+
+            marker.bindPopup(popupHtml);
+            circle.bindPopup(popupHtml);
+
+            circle.addTo(cellsLayerGroup);
+            marker.addTo(cellsLayerGroup);
+            cellMarkersMap[cell.id] = marker;
+          });
         }
 
-        // Autopista Sur Optimal Segment
-        L.polyline(autoSurOptimal, {
-          color: '#10b981',
-          weight: 6,
-          opacity: 0.9
-        }).bindTooltip(`<strong>Corredor Industrial Autopista Sur (Tramo Norte)</strong><br>Señal 5G Estable.`).addTo(layerGroup);
+        // B) Dibujar Corredores Logísticos
+        if (state.activeFilter === 'all' || state.activeFilter === 'corridors') {
+          // Corredor 1: Calle 80 - Siberia (Óptimo)
+          const corridor80 = [
+            [4.6540, -74.1050],
+            [4.7095, -74.1110],
+            [4.7420, -74.1780]
+          ];
+          L.polyline(corridor80, { color: '#10b981', weight: 4.5, opacity: 0.9 })
+            .bindPopup('<strong>Corredor Logístico Calle 80 - Siberia</strong><br/>Señal 5G continua para flotas de carga.')
+            .addTo(corridorsLayerGroup);
 
-        // Autopista Sur Blind Segment (Resolved if CAPEX Simulation is active!)
-        if (isSimulated) {
-          L.polyline(autoSurBlindSegment, {
-            color: '#10b981',
-            weight: 6,
+          // Corredor 2: Autopista Sur (Puente Aranda -> Bosa -> Soacha)
+          const corridorSurOptimal = [
+            [4.6260, -74.1130],
+            [4.6120, -74.1550]
+          ];
+          L.polyline(corridorSurOptimal, { color: '#10b981', weight: 4.5, opacity: 0.9 })
+            .bindPopup('<strong>Corredor Autopista Sur (Tramo Norte)</strong><br/>Cobertura 5G estable.')
+            .addTo(corridorsLayerGroup);
+
+          const corridorSurSouth = [
+            [4.6120, -74.1550],
+            [4.5930, -74.1980],
+            [4.5810, -74.2170]
+          ];
+          L.polyline(corridorSurSouth, {
+            color: isGapCovered ? '#10b981' : '#f43f5e',
+            weight: 4.5,
+            dashArray: isGapCovered ? null : '8, 8',
             opacity: 0.95
-          }).bindTooltip(`<strong>[SIMULACIÓN CAPEX] Autopista Sur Cubierta</strong><br>Continuidad IoT restaurada al 99.4%.`).addTo(layerGroup);
-        } else {
-          L.polyline(autoSurBlindSegment, {
-            color: '#ef4444',
-            weight: 6,
-            dashArray: '10, 8',
-            opacity: 0.95
-          }).bindTooltip(`
-            <strong>🚨 Corte Crítico de Telemetría: Autopista Sur (Bosa)</strong><br>
-            18 vehículos de carga sin monitoreo de cadena de frío.<br>
-            Riesgo financiero: $1,300 USD/hora.
-          `).addTo(layerGroup);
+          })
+            .bindPopup(isGapCovered
+              ? '<strong>Corredor Autopista Sur (Bosa/Soacha)</strong><br/>Cobertura recuperada exitosamente.'
+              : '<strong>Corte Crítico Autopista Sur (Bosa/Soacha)</strong><br/>Pérdida de señal RSSI -114 dBm en 18 camiones.')
+            .addTo(corridorsLayerGroup);
+        }
+
+        // C) Dibujar Puntos Ciegos SLA (si no están cubiertos)
+        if ((state.activeFilter === 'all' || state.activeFilter === 'blindspots') && !isGapCovered) {
+          const blindspots = [
+            { name: 'Corte Corredor Autopista Sur (Bosa/Soacha)', lat: 4.5930, lng: -74.1980, desc: 'RSSI -114 dBm. 18 camiones sin telemetría.' },
+            { name: 'Punto Ciego Macro: Ciudad Bolívar Alta', lat: 4.5580, lng: -74.1520, desc: 'Sombra orográfica sin cobertura 3.5 GHz.' }
+          ];
+          blindspots.forEach(bs => {
+            L.circle([bs.lat, bs.lng], {
+              radius: 2200,
+              color: '#f43f5e',
+              weight: 2,
+              dashArray: '6, 6',
+              fillColor: '#f43f5e',
+              fillOpacity: 0.2
+            })
+              .bindPopup(`<strong style="color:#e11d48;">${bs.name}</strong><br/>${bs.desc}`)
+              .addTo(blindspotsLayerGroup);
+          });
         }
       }
 
-      // C. Draw Blind Spot Zones & Pulsing Markers
-      if (filter === 'all' || filter === 'blind' || filter === 'corridor') {
-        const pulseIcon = L.divIcon({ className: 'pulse-warning', iconSize: [18, 18] });
+      function renderInventory() {
+        const container = document.getElementById('node-list');
+        const countBadge = document.getElementById('inventory-count');
+        const activeCells = getActiveCells();
+        countBadge.textContent = `${activeCells.length} Activas`;
 
-        // Blind Spot 1: Autopista Sur / Bosa
-        if (!isSimulated) {
-          L.circle([4.5880, -74.1480], {
-            color: '#ef4444',
-            fillColor: '#ef4444',
-            fillOpacity: 0.2,
-            dashArray: '6,6',
-            radius: 2400
-          }).addTo(layerGroup);
+        // Combinar todas las 20 celdas + simuladas para el buscador
+        let allCatalog = [...cellsData];
+        if (state.capexSimulated) allCatalog = allCatalog.concat(capexCellsData);
 
-          L.marker([4.5880, -74.1480], { icon: pulseIcon })
-            .bindTooltip(`<strong>Zona Sin Cobertura: Autopista Sur / Bosa</strong><br>Haz clic en "Simular Despliegue Antenas" para resolver.`)
-            .addTo(layerGroup);
-        } else {
-          // Simulated New Macro-Cell in Bosa/Autopista Sur
-          L.circle([4.5880, -74.1480], {
-            color: '#10b981',
-            fillColor: '#10b981',
-            fillOpacity: 0.22,
-            radius: 3100,
-            weight: 2
-          }).bindTooltip(`<strong>[SIMULADO] Macro-Celda CP-SIM-SUR</strong><br>Cubre Autopista Sur y Bosa (EIRP 65 dBm)`).addTo(layerGroup);
+        const q = state.searchQuery.trim().toLowerCase();
+        const filtered = q
+          ? allCatalog.filter(c =>
+              c.id.toLowerCase().includes(q) ||
+              c.name.toLowerCase().includes(q) ||
+              c.zone.toLowerCase().includes(q)
+            )
+          : allCatalog;
+
+        if (filtered.length === 0) {
+          container.innerHTML = `<p class="text-xs text-slate-400 py-3 text-center">No se encontraron nodos para "${state.searchQuery}".</p>`;
+          return;
         }
 
-        // Blind Spot 2: Ciudad Bolívar Alta
-        if (!isSimulated) {
-          L.circle([4.5650, -74.1420], {
-            color: '#ef4444',
-            fillColor: '#ef4444',
-            fillOpacity: 0.2,
-            dashArray: '6,6',
-            radius: 2300
-          }).addTo(layerGroup);
+        container.innerHTML = filtered.map(cell => {
+          const isOnline = cell.tier === 'base' || cell.tier === 'sim' || (cell.tier === 'pro' && state.proEnabled);
+          const badgeClass = isOnline
+            ? (cell.tier === 'sim' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-sky-500/20 text-sky-300')
+            : 'bg-slate-800 text-slate-400';
+          const statusText = isOnline ? 'Activa' : 'Pro (Inactiva)';
 
-          L.marker([4.5650, -74.1420], { icon: pulseIcon })
-            .bindTooltip(`<strong>Punto Ciego Urbano: Ciudad Bolívar</strong><br>RSSI -115 dBm (Sin servicio 5G).`)
-            .addTo(layerGroup);
-        } else {
-          // Simulated New Macro-Cell in Ciudad Bolívar
-          L.circle([4.5650, -74.1420], {
-            color: '#10b981',
-            fillColor: '#10b981',
-            fillOpacity: 0.22,
-            radius: 3000,
-            weight: 2
-          }).bindTooltip(`<strong>[SIMULADO] Macro-Celda CP-SIM-CB</strong><br>Cubre Ciudad Bolívar Alta (EIRP 65 dBm)`).addTo(layerGroup);
-        }
+          return `
+            <button type="button" data-cell-id="${cell.id}" data-lat="${cell.lat}" data-lng="${cell.lng}" data-online="${isOnline}"
+              class="node-item w-full text-left p-2.5 rounded-lg bg-[#080e1c] hover:bg-slate-800/90 border border-slate-800 hover:border-sky-500/50 transition flex items-center justify-between gap-2 cursor-pointer">
+              <div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-xs font-bold font-mono text-white">${cell.id}</span>
+                  <span class="text-xs font-semibold text-slate-200 truncate max-w-[165px]">${cell.name}</span>
+                </div>
+                <p class="text-[11px] text-slate-400">${cell.zone} • ${cell.eirp}</p>
+              </div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold ${badgeClass} whitespace-nowrap">
+                ${statusText}
+              </span>
+            </button>
+          `;
+        }).join('');
+
+        // Evento click en cada tarjeta del inventario
+        document.querySelectorAll('.node-item').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const lat = parseFloat(btn.dataset.lat);
+            const lng = parseFloat(btn.dataset.lng);
+            const cellId = btn.dataset.cellId;
+            const isOnline = btn.dataset.online === 'true';
+
+            if (!isOnline && !state.proEnabled) {
+              // Activar Pro automáticamente si el usuario hace clic en una celda Pro inactiva
+              toggleProMode(true);
+            }
+
+            map.flyTo([lat, lng], 13, { duration: 1.1 });
+            setTimeout(() => {
+              if (cellMarkersMap[cellId]) {
+                cellMarkersMap[cellId].openPopup();
+              }
+            }, 600);
+          });
+        });
       }
 
-      updateKPIs();
-      renderNodeList();
-    }
+      function renderKPIsAndAlerts() {
+        const activeCells = getActiveCells();
+        const totalMax = state.capexSimulated ? 22 : 20;
+        const isGapCovered = state.proEnabled || state.capexSimulated;
 
-    // 4B. RENDER SEARCHABLE 20-NODE INVENTORY LIST IN SIDEBAR
-    function renderNodeList() {
-      const container = document.getElementById('node-inventory-list');
-      const query = (document.getElementById('nodeSearchInput')?.value || '').toLowerCase();
-      const allCells = [...baseMacroCells, ...proMacroCells];
-      const activeTotal = isPro ? 20 : 5;
+        // Celdas activas
+        document.getElementById('kpi-cells').textContent = `${activeCells.length} / ${totalMax}`;
 
-      document.getElementById('inventory-count-badge').innerText = `${activeTotal} / 20 Activas`;
-      container.innerHTML = '';
+        // SLA y Riesgo
+        const slaEl = document.getElementById('kpi-sla');
+        const slaBadge = document.getElementById('kpi-sla-badge');
+        const riskEl = document.getElementById('kpi-risk');
+        const riskSub = document.getElementById('kpi-risk-sub');
+        const riskBadge = document.getElementById('kpi-risk-badge');
+        const alertsContainer = document.getElementById('alerts-container');
 
-      const filtered = allCells.filter(c =>
-        c.id.toLowerCase().includes(query) ||
-        c.name.toLowerCase().includes(query) ||
-        c.freq.toLowerCase().includes(query)
-      );
+        if (isGapCovered) {
+          slaEl.textContent = state.proEnabled ? '99.8%' : '98.9%';
+          slaBadge.textContent = '0 Zonas Críticas';
+          slaBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
 
-      filtered.forEach(cell => {
-        const unlocked = !cell.pro || isPro;
-        const badge = unlocked
-          ? `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400">Online</span>`
-          : `<span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400">Pro</span>`;
+          riskEl.textContent = '$0 USD';
+          riskEl.className = 'text-2xl font-extrabold text-emerald-400 mt-0.5 font-mono';
+          riskSub.textContent = 'Telemetría 100% continua en corredores';
+          riskBadge.textContent = 'SLA Óptimo';
+          riskBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
 
-        container.innerHTML += `
-          <div onclick="focusNode(${cell.lat}, ${cell.lng}, ${unlocked})" class="flex items-center justify-between bg-slate-900/90 hover:bg-slate-800 border border-slate-800 rounded-lg px-2.5 py-1.5 cursor-pointer transition">
-            <div class="truncate pr-2">
-              <span class="font-mono-tech text-[11px] font-bold ${unlocked ? 'text-sky-400' : 'text-slate-500'}">${cell.id}</span>
-              <span class="text-[11px] ${unlocked ? 'text-slate-200' : 'text-slate-500'} ml-1">${cell.name}</span>
+          alertsContainer.innerHTML = `
+            <div class="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+              <p class="text-xs font-bold text-emerald-300">Continuidad Total Garantizada</p>
+              <p class="text-[11px] text-emerald-200/80 mt-0.5">Todos los corredores logísticos y zonas urbanas operan dentro de parámetros SLA 5G.</p>
             </div>
-            ${badge}
-          </div>
-        `;
-      });
-    }
+          `;
+        } else {
+          slaEl.textContent = '91.8%';
+          slaBadge.textContent = '2 Zonas Críticas';
+          slaBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30';
 
-    function focusNode(lat, lng, unlocked) {
-      if (!unlocked) {
-        openProModal();
-        return;
-      }
-      map.flyTo([lat, lng], 13, { duration: 0.9 });
-    }
+          riskEl.textContent = '$2,150 USD';
+          riskEl.className = 'text-2xl font-extrabold text-amber-400 mt-0.5 font-mono';
+          riskSub.textContent = 'Por corte GPS/IoT en puntos ciegos';
+          riskBadge.textContent = 'Alerta Carga';
+          riskBadge.className = 'px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30';
 
-    // 5. UPDATE EXECUTIVE KPIS
-    function updateKPIs() {
-      let activeCount = isPro ? 20 : 5;
-      if (isSimulated) activeCount += 2;
-      document.getElementById('kpi-cells').innerText = `${activeCount} / 20${isSimulated ? ' (+2 Sim)' : ''}`;
+          alertsContainer.innerHTML = `
+            <div class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30">
+              <p class="text-xs font-bold text-rose-300">Corte en Corredor Autopista Sur (Bosa/Soacha)</p>
+              <p class="text-[11px] text-rose-200/80 mt-0.5">RSSI -114 dBm. 18 camiones sin reporte telemétrico en tiempo real.</p>
+            </div>
+            <div class="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30">
+              <p class="text-xs font-bold text-rose-300">Punto Ciego Macro: Ciudad Bolívar Alta</p>
+              <p class="text-[11px] text-rose-200/80 mt-0.5">Sombra orográfica sin cobertura 3.5 GHz. Impacto SLA urbano.</p>
+            </div>
+          `;
+        }
 
-      let sla = 91.8;
-      let risk = 2150;
+        // Tráfico agregado
+        const totalThroughput = activeCells.reduce((acc, c) => acc + c.throughput, 0);
+        document.getElementById('traffic-now').textContent = `${totalThroughput.toLocaleString()} Mbps`;
 
-      if (isPro) { sla += 4.6; risk -= 950; }
-      if (isSimulated) { sla += 3.2; risk -= 1100; }
-
-      document.getElementById('kpi-sla').innerText = `${sla.toFixed(1)}%`;
-      document.getElementById('kpi-risk').innerText = `$${Math.max(100, risk).toLocaleString()} USD`;
-
-      const slaBadge = document.getElementById('kpi-sla-badge');
-      const riskBadge = document.getElementById('kpi-risk-badge');
-
-      if (sla >= 99.0) {
-        slaBadge.className = 'text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
-        slaBadge.innerText = 'SLA Óptimo Metropolitano';
-        riskBadge.className = 'text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
-        riskBadge.innerText = 'Riesgo Mitigado';
-      } else {
-        slaBadge.className = 'text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30';
-        slaBadge.innerText = isSimulated ? 'Brecha Siberia' : '2 Zonas Críticas';
-      }
-    }
-
-    // 6. WHAT-IF CAPEX SIMULATION
-    function toggleCapexSimulation() {
-      isSimulated = !isSimulated;
-      const btn = document.getElementById('simBtn');
-      const alertSur = document.getElementById('alert-sur');
-      const alertCb = document.getElementById('alert-cb');
-
-      if (isSimulated) {
-        btn.className = 'w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg transition cursor-pointer';
-        btn.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4"></i><span>2 Macro-Celdas Simuladas Activas (ROI: 4m)</span>`;
-
-        alertSur.className = 'bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-xl p-2.5 text-xs';
-        alertSur.innerHTML = `<p class="font-bold text-emerald-300">Resuelto (Simulación): Autopista Sur</p><p class="text-slate-300 text-[11px] mt-0.5">Telemetría de flota restaurada al 100% en Bosa/Soacha.</p>`;
-
-        alertCb.className = 'bg-emerald-500/10 border-l-4 border-emerald-500 rounded-r-xl p-2.5 text-xs';
-        alertCb.innerHTML = `<p class="font-bold text-emerald-300">Resuelto (Simulación): Ciudad Bolívar</p><p class="text-slate-300 text-[11px] mt-0.5">Cobertura macro-celular 3.5 GHz proyectada.</p>`;
-      } else {
-        btn.className = 'w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/25 transition cursor-pointer';
-        btn.innerHTML = `<i data-lucide="plus-circle" class="w-4 h-4"></i><span>Simular Despliegue Antenas Sur/Occidente</span>`;
-
-        alertSur.className = 'bg-rose-500/10 border-l-4 border-rose-500 rounded-r-xl p-2.5 text-xs';
-        alertSur.innerHTML = `<p class="font-bold text-rose-300">Corte en Corredor Autopista Sur (Bosa/Soacha)</p><p class="text-slate-400 text-[11px] mt-0.5">RSSI -114 dBm. 18 camiones sin reporte telemétrico en tiempo real.</p>`;
-
-        alertCb.className = 'bg-rose-500/10 border-l-4 border-rose-500 rounded-r-xl p-2.5 text-xs';
-        alertCb.innerHTML = `<p class="font-bold text-rose-300">Punto Ciego Macro: Ciudad Bolívar Alta</p><p class="text-slate-400 text-[11px] mt-0.5">Sombra orográfica sin cobertura 3.5 GHz. Impacto SLA urbano.</p>`;
-      }
-      lucide.createIcons();
-      renderMap();
-    }
-
-    // 7. FILTER BUTTONS
-    function filterMap(type, btn) {
-      document.querySelectorAll('.filter-btn').forEach(b => {
-        b.className = 'filter-btn bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer';
-      });
-      btn.className = 'filter-btn active bg-sky-500/15 border border-sky-500 text-white text-xs font-medium px-3 py-2 rounded-xl text-left transition cursor-pointer';
-      renderMap(type);
-    }
-
-    // 8. ROLE SWITCHER (Auto-zooms to Logistics Corridors when Logistics Role selected)
-    function changeRole() {
-      const role = document.getElementById('roleSelect').value;
-      const buttons = document.querySelectorAll('.filter-btn');
-      if (role === 'logistics') {
-        filterMap('corridor', buttons[2]);
-        map.setView([4.6600, -74.1250], 11);
-      } else {
-        filterMap('all', buttons[0]);
-        map.setView([4.6550, -74.0950], 11);
-      }
-    }
-
-    // 9. PRO MODAL
-    function openProModal() {
-      if (!isPro) {
-        const modal = document.getElementById('proModal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-      }
-    }
-    function closeProModal() {
-      const modal = document.getElementById('proModal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-    function activatePro() {
-      const corp = document.getElementById('corpName').value || 'Operador Logístico B2B';
-      isPro = true;
-      closeProModal();
-      const proBtn = document.getElementById('proBtn');
-      proBtn.className = 'bg-emerald-600 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl flex items-center gap-2 cursor-default';
-      document.getElementById('proBtnText').innerText = `Red Pro Activa (${corp})`;
-      document.getElementById('proBtnTextMobile').innerText = '20/20';
-      document.getElementById('pdf-client').innerText = corp;
-      map.setView([4.6750, -74.1250], 10);
-      renderMap();
-    }
-
-    // 10. LIVE TELEMETRY CHART & STREAM
-    const ctx = document.getElementById('telemetryChart').getContext('2d');
-    const telemetryChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['-50s', '-40s', '-30s', '-20s', '-10s', 'Vivo'],
-        datasets: [{
-          data: [690, 715, 705, 740, 760, 742],
-          borderColor: '#0ea5e9',
-          backgroundColor: 'rgba(14, 165, 233, 0.15)',
-          borderWidth: 2,
-          fill: true,
-          tension: 0.4,
-          pointRadius: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-          x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { display: false } },
-          y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e293b' }, min: 600, max: 900 }
+        if (trafficChart) {
+          const factor = totalThroughput / 742;
+          trafficChart.data.datasets[0].data = [610, 645, 690, 675, 710, 728, 742].map(v => Math.round(v * factor));
+          trafficChart.update();
         }
       }
-    });
 
-    setInterval(() => {
-      const lat = (13.4 + Math.random() * 2.8).toFixed(1);
-      document.getElementById('kpi-latency').innerText = `${lat} ms`;
+      function refreshAll() {
+        renderMapLayers();
+        renderInventory();
+        renderKPIsAndAlerts();
+      }
 
-      const mbps = Math.floor(680 + Math.random() * 160);
-      document.getElementById('live-mbps-label').innerText = `${mbps} Mbps`;
-      telemetryChart.data.datasets[0].data.shift();
-      telemetryChart.data.datasets[0].data.push(mbps);
-      telemetryChart.update('none');
-    }, 2500);
+      // ==========================================
+      // 5. EVENTOS DE INTERACCIÓN DE USUARIO
+      // ==========================================
 
-    // 11. PDF CONSULTING REPORT
-    function exportConsultingPDF() {
-      document.getElementById('pdf-date').innerText = new Date().toLocaleDateString('es-CO');
-      document.getElementById('pdf-sla').innerText = document.getElementById('kpi-sla').innerText;
-      document.getElementById('pdf-cells').innerText = document.getElementById('kpi-cells').innerText;
-      document.getElementById('pdf-risk').innerText = document.getElementById('kpi-risk').innerText;
+      // Botón Activar / Desactivar Red Pro
+      function toggleProMode(forceState) {
+        state.proEnabled = typeof forceState === 'boolean' ? forceState : !state.proEnabled;
+        const btn = document.getElementById('btn-toggle-pro');
+        const txt = document.getElementById('pro-btn-text');
 
-      const tbody = document.getElementById('pdf-table-body');
-      tbody.innerHTML = '';
-      const activeCells = isPro ? [...baseMacroCells, ...proMacroCells] : baseMacroCells;
+        if (state.proEnabled) {
+          btn.className = 'px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-2';
+          txt.textContent = 'Red Pro Activa (20 Celdas)';
+          map.flyTo([4.6750, -74.1250], 10, { duration: 1.1 });
+        } else {
+          btn.className = 'px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-lg shadow-amber-500/20 transition cursor-pointer flex items-center gap-2';
+          txt.textContent = 'Activar Red Pro (20 Celdas)';
+          map.flyTo([4.6450, -74.1150], 11, { duration: 1.1 });
+        }
+        refreshAll();
+      }
 
-      activeCells.forEach(c => {
-        tbody.innerHTML += `
-          <tr>
-            <td><strong>${c.id}</strong></td>
-            <td>${c.name}</td>
-            <td>${c.freq}</td>
-            <td>${c.eirp}</td>
-            <td>${(c.radius/1000).toFixed(1)} km</td>
-            <td>${c.rssi} dBm</td>
-            <td>Activo / Óptimo</td>
-          </tr>
-        `;
+      document.getElementById('btn-toggle-pro').addEventListener('click', () => toggleProMode());
+
+      // Botón Simulador CAPEX
+      document.getElementById('btn-simulate-capex').addEventListener('click', () => {
+        state.capexSimulated = !state.capexSimulated;
+        const btnText = document.getElementById('sim-btn-text');
+        const roiBox = document.getElementById('sim-roi-box');
+        const statusTag = document.getElementById('sim-status-tag');
+
+        if (state.capexSimulated) {
+          btnText.textContent = 'Detener Simulación CAPEX';
+          roiBox.classList.remove('hidden');
+          statusTag.textContent = 'Simulando';
+          statusTag.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300';
+          map.flyTo([4.5780, -74.1750], 12, { duration: 1.1 });
+        } else {
+          btnText.textContent = 'Simular Despliegue Antenas Sur/Occidente';
+          roiBox.classList.add('hidden');
+          statusTag.textContent = 'Listo';
+          statusTag.className = 'text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300';
+        }
+        refreshAll();
       });
 
-      window.print();
-    }
+      // Filtros de Capas de Cobertura
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.filter-btn').forEach(b => {
+            b.className = 'filter-btn px-3 py-2 rounded-lg text-xs font-semibold bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700 transition cursor-pointer text-left';
+          });
+          btn.className = 'filter-btn active-filter px-3 py-2 rounded-lg text-xs font-semibold bg-sky-600 text-white border border-sky-500 transition cursor-pointer text-left';
+          state.activeFilter = btn.dataset.filter;
+          renderMapLayers();
+        });
+      });
 
-    // Initial Render
-    renderMap();
+      // Buscador del Inventario (Enter + Botón Ir + Limpiar)
+      const searchForm = document.getElementById('node-search-form');
+      const searchInput = document.getElementById('node-search-input');
+
+      searchInput.addEventListener('input', (e) => {
+        state.searchQuery = e.target.value;
+        renderInventory();
+      });
+
+      searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        state.searchQuery = searchInput.value;
+        renderInventory();
+        const firstBtn = document.querySelector('.node-item');
+        if (firstBtn) firstBtn.click();
+      });
+
+      document.getElementById('btn-clear-search').addEventListener('click', () => {
+        searchInput.value = '';
+        state.searchQuery = '';
+        renderInventory();
+      });
+
+      // Modal Informe QoS (PDF)
+      const reportModal = document.getElementById('report-modal');
+      document.getElementById('btn-export-report').addEventListener('click', () => {
+        const activeCells = getActiveCells();
+        document.getElementById('rep-date').textContent = 'Fecha: ' + new Date().toLocaleString('es-CO');
+        document.getElementById('rep-sla').textContent = document.getElementById('kpi-sla').textContent;
+        document.getElementById('rep-cells').textContent = document.getElementById('kpi-cells').textContent;
+        document.getElementById('rep-latency').textContent = document.getElementById('kpi-latency').textContent;
+        document.getElementById('rep-risk').textContent = document.getElementById('kpi-risk').textContent;
+
+        document.getElementById('rep-table-body').innerHTML = activeCells.map(c => `
+          <tr>
+            <td class="p-2.5 font-mono font-bold">${c.id}</td>
+            <td class="p-2.5">${c.name} (${c.zone})</td>
+            <td class="p-2.5 uppercase font-semibold">${c.tier}</td>
+            <td class="p-2.5">${c.eirp}</td>
+            <td class="p-2.5">${(c.radius/1000).toFixed(1)} km</td>
+            <td class="p-2.5 font-mono">${c.throughput} Mbps</td>
+          </tr>
+        `).join('');
+
+        reportModal.classList.remove('hidden');
+        reportModal.classList.add('flex');
+      });
+
+      document.getElementById('btn-close-report').addEventListener('click', () => {
+        reportModal.classList.add('hidden');
+        reportModal.classList.remove('flex');
+      });
+
+      document.getElementById('btn-print-pdf').addEventListener('click', () => {
+        window.print();
+      });
+
+      // Telemetría viva de latencia cada 3 segundos
+      setInterval(() => {
+        const baseLat = state.proEnabled ? 11.8 : 14.2;
+        const jitter = (Math.random() * 0.8 - 0.4).toFixed(1);
+        const currentLat = (baseLat + parseFloat(jitter)).toFixed(1);
+        document.getElementById('kpi-latency').textContent = `${currentLat} ms`;
+      }, 3000);
+
+      // Render inicial
+      refreshAll();
+    });
   </script>
 </body>
 </html>
