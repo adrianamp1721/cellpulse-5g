@@ -1,19 +1,116 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cellpulse-5g
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cellpulse-config
+  namespace: cellpulse-5g
+data:
+  REDIS_URL: "redis://redis-service:6379/0"
+  BAND_FREQUENCY_MHZ: "3500"
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: cellpulse-frontend-deployment
+  name: redis-cache
+  namespace: cellpulse-5g
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: cellpulse-frontend
+      app: redis-cache
   template:
     metadata:
       labels:
-        app: cellpulse-frontend
+        app: redis-cache
     spec:
       containers:
-      - name: cellpulse-frontend
-        image: cellpulse-frontend:latest
-        ports:
-        - containerPort: 80
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: cellpulse-5g
+spec:
+  selector:
+    app: redis-cache
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cellpulse-api
+  namespace: cellpulse-5g
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cellpulse-api
+  template:
+    metadata:
+      labels:
+        app: cellpulse-api
+    spec:
+      containers:
+        - name: fastapi-backend
+          image: ghcr.io/adrianamp1721/cellpulse-5g-api:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: cellpulse-config
+          resources:
+            requests:
+              cpu: "150m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cellpulse-api-service
+  namespace: cellpulse-5g
+spec:
+  type: LoadBalancer
+  selector:
+    app: cellpulse-api
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cellpulse-api-hpa
+  namespace: cellpulse-5g
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: cellpulse-api
+  minReplicas: 2
+  maxReplicas: 6
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
