@@ -26,7 +26,6 @@
     }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
 
-    /* Asegurar altura real del mapa */
     #map-wrapper {
       position: relative;
       width: 100%;
@@ -41,24 +40,27 @@
       background: #0b1324;
     }
 
-    /* Scrollbar limpio para el panel lateral */
+    /* Estilo oscuro elegante para teselas OpenStreetMap sin necesidad de API Key */
+    .dark-osm-tiles {
+      filter: invert(100%) hue-rotate(180deg) brightness(92%) contrast(92%) saturate(85%);
+    }
+
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #090f1d; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 9999px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #334155; }
 
-    /* Estilos de impresión para el Informe PDF */
     @media print {
       body * { visibility: hidden; }
       #printable-report, #printable-report * { visibility: visible; }
       #printable-report {
-        position: fixed;
+        position: absolute;
         left: 0;
         top: 0;
         width: 100%;
         background: white !important;
         color: #0f172a !important;
-        padding: 24px;
+        padding: 20px;
         z-index: 99999;
       }
       .no-print { display: none !important; }
@@ -76,10 +78,12 @@
         </svg>
       </div>
       <div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <h1 class="text-lg font-extrabold tracking-tight text-white">CellPulse 5G</h1>
           <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded bg-sky-500/15 text-sky-400 border border-sky-500/30">
             Enterprise NOC
+          </span>
+          <span id="subscriber-badge" class="hidden px-2.5 py-0.5 text-[10px] font-bold rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
           </span>
         </div>
         <p class="text-xs text-slate-400">Cobertura Macro-Celular Bogotá D.C. & Telemetría Logística IoT</p>
@@ -106,7 +110,6 @@
 
   <!-- KPI EXECUTIVE BAR -->
   <section class="bg-[#080e1c] border-b border-slate-800/80 px-4 lg:px-6 py-3 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 z-20">
-    <!-- KPI 1 -->
     <div class="bg-[#0d1527] border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between">
       <div>
         <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Disponibilidad SLA Bogotá</p>
@@ -117,7 +120,6 @@
       </span>
     </div>
 
-    <!-- KPI 2 -->
     <div class="bg-[#0d1527] border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between">
       <div>
         <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Latencia E2E (Banda n78)</p>
@@ -128,7 +130,6 @@
       </span>
     </div>
 
-    <!-- KPI 3 -->
     <div class="bg-[#0d1527] border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between">
       <div>
         <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Macro-Celdas Activas</p>
@@ -139,7 +140,6 @@
       </span>
     </div>
 
-    <!-- KPI 4 -->
     <div class="bg-[#0d1527] border border-slate-800 rounded-xl px-4 py-3 flex items-center justify-between" title="Impacto financiero estimado en flotas de carga por pérdida de telemetría GPS/cadena de frío en zonas sin cobertura">
       <div>
         <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Riesgo Operativo Flotas / Hr</p>
@@ -233,7 +233,6 @@
         </form>
 
         <div id="node-list" class="max-h-48 overflow-y-auto custom-scroll space-y-1.5 pr-1">
-          <!-- Se llena dinámicamente con JS -->
         </div>
       </div>
 
@@ -241,7 +240,6 @@
       <div class="bg-[#0e172a] border border-slate-800 rounded-xl p-3.5">
         <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">Alertas de Continuidad & SLA</h2>
         <div id="alerts-container" class="space-y-2">
-          <!-- Se actualiza dinámicamente -->
         </div>
       </div>
 
@@ -281,77 +279,206 @@
 
   </main>
 
-  <!-- MODAL / SECCIÓN OCULTA PARA INFORME QOS PDF -->
-  <div id="report-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[5000] hidden items-center justify-center p-4 no-print">
-    <div class="bg-white text-slate-900 rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-6 sm:p-8">
-      <div id="printable-report">
-        <div class="flex flex-wrap justify-between items-start border-b-2 border-slate-200 pb-4 mb-5 gap-4">
-          <div>
-            <span class="text-xs font-bold uppercase tracking-widest text-sky-600">Auditoría Técnica de Red 5G</span>
-            <h2 class="text-2xl font-extrabold text-slate-900 mt-1">Informe Ejecutivo de Cobertura & QoS</h2>
-            <p class="text-sm text-slate-500">Plataforma CellPulse 5G Enterprise NOC — Región Bogotá D.C. & Sabana</p>
-          </div>
-          <div class="text-right text-xs text-slate-500 font-mono">
-            <p id="rep-date">Fecha: --</p>
-            <p>Banda: 3.5 GHz (n78)</p>
-            <p>Estándar: 3GPP Rel-16 / CNCF</p>
-          </div>
+  <!-- MODAL CHECKOUT B2B PARA ACTIVAR RED PRO -->
+  <div id="pro-checkout-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[5000] hidden items-center justify-center p-4 no-print">
+    <div class="bg-[#0d1527] border border-slate-700 text-slate-100 rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden">
+      <div class="bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-4 flex items-center justify-between text-slate-950">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-widest">Suscripción Enterprise B2B</span>
+          <h3 class="text-lg font-extrabold">Activar Licencia CellPulse 5G Pro</h3>
         </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-          <div class="bg-slate-100 p-3 rounded-lg">
-            <p class="text-[11px] font-bold text-slate-500 uppercase">Disponibilidad SLA</p>
-            <p id="rep-sla" class="text-xl font-extrabold text-slate-900 mt-1">91.8%</p>
-          </div>
-          <div class="bg-slate-100 p-3 rounded-lg">
-            <p class="text-[11px] font-bold text-slate-500 uppercase">Celdas Activas</p>
-            <p id="rep-cells" class="text-xl font-extrabold text-slate-900 mt-1">5 / 20</p>
-          </div>
-          <div class="bg-slate-100 p-3 rounded-lg">
-            <p class="text-[11px] font-bold text-slate-500 uppercase">Latencia Promedio</p>
-            <p id="rep-latency" class="text-xl font-extrabold text-sky-600 mt-1">14.2 ms</p>
-          </div>
-          <div class="bg-slate-100 p-3 rounded-lg">
-            <p class="text-[11px] font-bold text-slate-500 uppercase">Riesgo Carga/Hr</p>
-            <p id="rep-risk" class="text-xl font-extrabold text-amber-600 mt-1">$2,150 USD</p>
-          </div>
-        </div>
-
-        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-700 mb-2">Detalle de Macro-Celdas Operativas</h3>
-        <div class="overflow-x-auto border border-slate-200 rounded-lg mb-5">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-100 text-slate-700 font-bold">
-              <tr>
-                <th class="p-2.5">ID Nodo</th>
-                <th class="p-2.5">Sector / Ubicación</th>
-                <th class="p-2.5">Nivel</th>
-                <th class="p-2.5">EIRP</th>
-                <th class="p-2.5">Radio</th>
-                <th class="p-2.5">Tráfico</th>
-              </tr>
-            </thead>
-            <tbody id="rep-table-body" class="divide-y divide-slate-200">
-            </tbody>
-          </table>
-        </div>
-
-        <div class="bg-sky-50 border border-sky-200 rounded-lg p-3.5 text-xs text-slate-700">
-          <strong>Conclusión de Ingeniería:</strong> Los cálculos geoespaciales basados en Potencia Radiada Isotrópica Equivalente (EIRP) en banda n78 confirman continuidad de servicio en los ejes troncales activos. Se recomienda mantener habilitada la topología Pro o ejecutar expansión CAPEX en el corredor Autopista Sur para garantizar SLA > 99.5% en transporte de carga.
-        </div>
+        <button id="btn-close-checkout" type="button" class="text-slate-950 hover:bg-black/10 rounded-lg px-2.5 py-1 font-bold cursor-pointer">✕</button>
       </div>
 
-      <div class="mt-6 flex justify-end gap-3 no-print">
+      <form id="pro-checkout-form" class="p-6 space-y-4">
+        <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-bold text-white">Plan Enterprise Red Metropolitana (20 Celdas)</p>
+            <p class="text-[11px] text-slate-400">Telemetría 3.5 GHz n78 + API REST + Auditoría SLA</p>
+          </div>
+          <div class="text-right">
+            <p class="text-base font-extrabold text-amber-400 font-mono">$490 USD</p>
+            <p class="text-[10px] text-slate-400">/ mes (Demo)</p>
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <button id="btn-autofill-demo" type="button" class="text-xs font-semibold text-sky-400 hover:text-sky-300 underline cursor-pointer">
+            Rellenar automáticamente con datos corporativos de prueba
+          </button>
+        </div>
+
+        <!-- Datos de Contacto -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Nombre del Responsable *</label>
+            <input id="chk-name" type="text" required placeholder="Ej: Ing. Carlos Mendoza"
+              class="w-full bg-[#070d19] border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-xs text-white outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Empresa / Razón Social *</label>
+            <input id="chk-company" type="text" required placeholder="Ej: Logística Andina S.A.S."
+              class="w-full bg-[#070d19] border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-xs text-white outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Correo Corporativo *</label>
+            <input id="chk-email" type="email" required placeholder="operaciones@empresa.com.co"
+              class="w-full bg-[#070d19] border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-xs text-white outline-none" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-300 mb-1">Teléfono / Celular *</label>
+            <input id="chk-phone" type="tel" required placeholder="+57 310 555 0199"
+              class="w-full bg-[#070d19] border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-xs text-white outline-none" />
+          </div>
+        </div>
+
+        <!-- Datos de Tarjeta Simulada -->
+        <div class="border-t border-slate-800 pt-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-slate-200">Método de Pago Corporativo (Simulado)</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-mono">TLS 1.3 Sandbox</span>
+          </div>
+          <div class="space-y-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-300 mb-1">Número de Tarjeta Corporativa *</label>
+              <input id="chk-card" type="text" required maxlength="19" placeholder="4532 •••• •••• 8842"
+                class="w-full bg-[#070d19] border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Vencimiento (MM/AA) *</label>
+                <input id="chk-exp" type="text" required maxlength="5" placeholder="09/29"
+                  class="w-full bg-[#070d19] border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Código CVV *</label>
+                <input id="chk-cvv" type="password" required maxlength="4" placeholder="•••"
+                  class="w-full bg-[#070d19] border border-slate-700 focus:border-amber-500 rounded-lg px-3 py-2 text-xs font-mono text-white outline-none" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2.5 pt-2">
+          <button id="btn-cancel-checkout" type="button" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 text-xs font-extrabold shadow-lg cursor-pointer">
+            Confirmar Activación Pro
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL / SECCIÓN AMPLIADA PARA INFORME QOS PDF MEMBRETEADO -->
+  <div id="report-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[5000] hidden items-center justify-center p-4 no-print">
+    <div class="bg-white text-slate-900 rounded-2xl max-w-4xl w-full max-h-[92vh] overflow-y-auto shadow-2xl p-6 sm:p-10">
+      <div id="printable-report" class="space-y-6">
+
+        <!-- ENCABEZADO MEMBRETEADO -->
+        <div class="flex flex-wrap justify-between items-start border-b-2 border-slate-800 pb-5 gap-4">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-xl bg-slate-900 text-sky-400 flex items-center justify-center font-extrabold text-xl">
+              CP
+            </div>
+            <div>
+              <span class="text-[11px] font-extrabold uppercase tracking-widest text-sky-700">CellPulse 5G Technologies S.A.S.</span>
+              <h2 class="text-2xl font-extrabold text-slate-900 leading-tight">Dictamen Técnico de Cobertura & Auditoría QoS</h2>
+              <p class="text-xs text-slate-600">Infraestructura Cloud-Native (CNCF) • Telemetría Geoespacial Banda n78 (3.5 GHz)</p>
+            </div>
+          </div>
+          <div class="text-right text-xs text-slate-600 font-mono bg-slate-100 p-3 rounded-lg border border-slate-200">
+            <p class="font-bold text-slate-900" id="rep-code">ID: AUD-5G-2026-BOG</p>
+            <p id="rep-date">Fecha: --</p>
+            <p id="rep-client">Cliente: Evaluación Corporativa</p>
+          </div>
+        </div>
+
+        <!-- RESUMEN EJECUTIVO DE KPIS -->
+        <div>
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 mb-2.5">1. Indicadores Clave de Desempeño (KPIs de Red)</h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Disponibilidad SLA</p>
+              <p id="rep-sla" class="text-2xl font-extrabold text-slate-900 mt-1">91.8%</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Meta B2B: ≥ 99.5%</p>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Nodos Operativos</p>
+              <p id="rep-cells" class="text-2xl font-extrabold text-slate-900 mt-1">5 / 20</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Bogotá D.C. & Sabana</p>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Latencia Media E2E</p>
+              <p id="rep-latency" class="text-2xl font-extrabold text-sky-700 mt-1">14.2 ms</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Perfil URLLC / eMBB</p>
+            </div>
+            <div class="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
+              <p class="text-[10px] font-bold text-slate-500 uppercase">Exposición Riesgo/Hr</p>
+              <p id="rep-risk" class="text-2xl font-extrabold text-amber-600 mt-1">$2,150 USD</p>
+              <p class="text-[10px] text-slate-500 mt-0.5">Continuidad flotas IoT</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ANÁLISIS TÉCNICO PROFUNDO -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-800">2. Análisis Técnico de Propagación, Capacidad e Impacto Financiero</h3>
+          <div id="rep-deep-analysis" class="text-xs text-slate-700 leading-relaxed space-y-2">
+          </div>
+        </div>
+
+        <!-- TABLA DE INVENTARIO -->
+        <div>
+          <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 mb-2">3. Matriz Técnica de Macro-Celdas Activas en Topología</h3>
+          <div class="overflow-x-auto border border-slate-300 rounded-xl">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-900 text-white font-bold">
+                <tr>
+                  <th class="p-2.5">ID</th>
+                  <th class="p-2.5">Estación / Localidad</th>
+                  <th class="p-2.5">Nivel</th>
+                  <th class="p-2.5">Potencia EIRP</th>
+                  <th class="p-2.5">Radio Efectivo</th>
+                  <th class="p-2.5">Latencia</th>
+                  <th class="p-2.5">Throughput</th>
+                </tr>
+              </thead>
+              <tbody id="rep-table-body" class="divide-y divide-slate-200">
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PIE DE PÁGINA MEMBRETEADO CON DATOS DE CONTACTO -->
+        <footer class="border-t-2 border-slate-800 pt-4 mt-6 flex flex-wrap justify-between items-center gap-4 text-[11px] text-slate-600">
+          <div>
+            <p class="font-extrabold text-slate-900 text-xs">CellPulse 5G — Ingeniería de Redes & Arquitectura Cloud-Native</p>
+            <p>Responsable Técnico: <strong class="text-slate-800">Adriana M.P. & Equipo CellPulse 5G</strong> • Bogotá D.C., Colombia</p>
+            <p>Contacto Corporativo: <span class="font-mono text-sky-800">contacto@cellpulse5g.io</span> | Tel: +57 (601) 742-5890</p>
+          </div>
+          <div class="text-right font-mono text-[10px]">
+            <p class="text-slate-800 font-bold">Portal Live: proud-field-073a24510.4.azurestaticapps.net</p>
+            <p>Repositorio: github.com/adrianamp1721/cellpulse-5g</p>
+            <p class="text-emerald-700 font-semibold mt-0.5">Documento Certificado • Modelo DIKW Enterprise</p>
+          </div>
+        </footer>
+
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3 no-print border-t border-slate-200 pt-4">
         <button id="btn-close-report" type="button" class="px-4 py-2 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-sm font-semibold cursor-pointer">
-          Cerrar
+          Cerrar Vista Previa
         </button>
         <button id="btn-print-pdf" type="button" class="px-5 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-sm font-bold shadow cursor-pointer">
-          Imprimir / Guardar PDF
+          Imprimir / Descargar PDF
         </button>
       </div>
     </div>
   </div>
 
-  <!-- SCRIPTS: Leaflet y Chart.js con carga segura -->
+  <!-- SCRIPTS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
@@ -361,14 +488,14 @@
       // 1. DATOS DE LAS 20 MACRO-CELDAS + SIMULADAS
       // ==========================================
       const cellsData = [
-        // 5 CELDAS BASE (Activas por defecto)
+        // 5 CELDAS BASE
         { id: 'CP-01', name: 'Centro Internacional', zone: 'Santa Fe / Centro', lat: 4.6155, lng: -74.0695, tier: 'base', eirp: '62 dBm', radius: 3200, throughput: 168, latency: 13.4 },
         { id: 'CP-02', name: 'Chapinero Alto', zone: 'Chapinero', lat: 4.6485, lng: -74.0620, tier: 'base', eirp: '62 dBm', radius: 3000, throughput: 154, latency: 14.1 },
         { id: 'CP-03', name: 'Ciudad Salitre', zone: 'Teusaquillo / Salitre', lat: 4.6540, lng: -74.1050, tier: 'base', eirp: '63 dBm', radius: 3300, throughput: 162, latency: 13.8 },
         { id: 'CP-04', name: 'Portal Calle 80', zone: 'Engativá', lat: 4.7095, lng: -74.1110, tier: 'base', eirp: '62 dBm', radius: 3100, throughput: 138, latency: 15.0 },
         { id: 'CP-05', name: 'Zona Industrial Puente Aranda', zone: 'Puente Aranda', lat: 4.6260, lng: -74.1130, tier: 'base', eirp: '61 dBm', radius: 2900, throughput: 120, latency: 14.7 },
 
-        // 15 CELDAS PRO (Se activan con el botón PRO)
+        // 15 CELDAS PRO
         { id: 'CP-06', name: 'Usaquén Santa Bárbara', zone: 'Usaquén', lat: 4.6960, lng: -74.0330, tier: 'pro', eirp: '64 dBm', radius: 3400, throughput: 195, latency: 11.8 },
         { id: 'CP-07', name: 'Toberín Autopista Norte', zone: 'Usaquén Norte', lat: 4.7460, lng: -74.0450, tier: 'pro', eirp: '64 dBm', radius: 3500, throughput: 188, latency: 12.1 },
         { id: 'CP-08', name: 'Suba Centro & Niza', zone: 'Suba', lat: 4.7410, lng: -74.0840, tier: 'pro', eirp: '63 dBm', radius: 3300, throughput: 182, latency: 12.4 },
@@ -386,22 +513,22 @@
         { id: 'CP-20', name: 'Ciudad Bolívar Mirador', zone: 'Ciudad Bolívar', lat: 4.5650, lng: -74.1560, tier: 'pro', eirp: '64 dBm', radius: 3400, throughput: 179, latency: 12.5 }
       ];
 
-      // 2 CELDAS SIMULADAS CAPEX (What-If)
       const capexCellsData = [
         { id: 'SIM-01', name: 'CAPEX Ciudad Bolívar Alta', zone: 'Ciudad Bolívar (Sim)', lat: 4.5580, lng: -74.1520, tier: 'sim', eirp: '64 dBm', radius: 3500, throughput: 185, latency: 12.0 },
         { id: 'SIM-02', name: 'CAPEX Autopista Sur / Bosa', zone: 'Soacha - Bosa (Sim)', lat: 4.5930, lng: -74.1980, tier: 'sim', eirp: '65 dBm', radius: 3600, throughput: 198, latency: 11.6 }
       ];
 
-      // Estado global de la aplicación
       let state = {
         proEnabled: false,
         capexSimulated: false,
         activeFilter: 'all',
-        searchQuery: ''
+        searchQuery: '',
+        subscriber: null,
+        pendingCellToFocus: null
       };
 
       // ==========================================
-      // 2. INICIALIZACIÓN SEGURA DEL MAPA LEAFLET
+      // 2. MAPA LEAFLET SIN API KEY (OSM DARK FILTER)
       // ==========================================
       const map = L.map('map', {
         center: [4.6450, -74.1150],
@@ -409,31 +536,18 @@
         zoomControl: true
       });
 
-      // Capa base oscura CartoDB Dark Matter (con fallback a OpenStreetMap si falla)
-      const darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO',
-        subdomains: 'abcd',
-        maxZoom: 19
-      });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors | CellPulse 5G GIS',
+        maxZoom: 19,
+        className: 'dark-osm-tiles'
+      }).addTo(map);
 
-      darkTiles.on('tileerror', () => {
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap'
-        }).addTo(map);
-      });
-
-      darkTiles.addTo(map);
-
-      // Forzar recalculo de tamaño tras montar el DOM
       setTimeout(() => { map.invalidateSize(); }, 250);
       window.addEventListener('resize', () => map.invalidateSize());
 
-      // Grupos de capas en el mapa
       const cellsLayerGroup = L.layerGroup().addTo(map);
       const corridorsLayerGroup = L.layerGroup().addTo(map);
       const blindspotsLayerGroup = L.layerGroup().addTo(map);
-
-      // Diccionario para volar hacia una antena al hacer clic en el inventario
       let cellMarkersMap = {};
 
       // ==========================================
@@ -491,12 +605,11 @@
         const activeCells = getActiveCells();
         const isGapCovered = state.proEnabled || state.capexSimulated;
 
-        // A) Dibujar Celdas Activas (si el filtro lo permite)
         if (state.activeFilter === 'all' || state.activeFilter === 'base') {
           activeCells.forEach(cell => {
             if (state.activeFilter === 'base' && cell.tier !== 'base') return;
 
-            let color = '#38bdf8'; // Base (Sky)
+            let color = '#38bdf8';
             let tierLabel = 'Macro-Celda Base';
             if (cell.tier === 'pro') { color = '#a78bfa'; tierLabel = 'Enterprise Pro'; }
             if (cell.tier === 'sim') { color = '#34d399'; tierLabel = 'Simulación CAPEX'; }
@@ -504,9 +617,9 @@
             const circle = L.circle([cell.lat, cell.lng], {
               radius: cell.radius,
               color: color,
-              weight: 1.5,
+              weight: 1.8,
               fillColor: color,
-              fillOpacity: 0.16
+              fillOpacity: 0.18
             });
 
             const marker = L.circleMarker([cell.lat, cell.lng], {
@@ -518,7 +631,7 @@
             });
 
             const popupHtml = `
-              <div style="font-family: Inter, sans-serif; color: #0f172a; min-width: 190px;">
+              <div style="font-family: Inter, sans-serif; color: #0f172a; min-width: 195px;">
                 <div style="font-size: 10px; font-weight: 800; text-transform: uppercase; color: #0284c7;">${cell.id} • ${tierLabel}</div>
                 <div style="font-size: 14px; font-weight: 800; margin: 2px 0;">${cell.name}</div>
                 <div style="font-size: 11px; color: #475569; margin-bottom: 6px;">Sector: ${cell.zone}</div>
@@ -538,24 +651,21 @@
           });
         }
 
-        // B) Dibujar Corredores Logísticos
         if (state.activeFilter === 'all' || state.activeFilter === 'corridors') {
-          // Corredor 1: Calle 80 - Siberia (Óptimo)
           const corridor80 = [
             [4.6540, -74.1050],
             [4.7095, -74.1110],
             [4.7420, -74.1780]
           ];
-          L.polyline(corridor80, { color: '#10b981', weight: 4.5, opacity: 0.9 })
+          L.polyline(corridor80, { color: '#10b981', weight: 4.5, opacity: 0.95 })
             .bindPopup('<strong>Corredor Logístico Calle 80 - Siberia</strong><br/>Señal 5G continua para flotas de carga.')
             .addTo(corridorsLayerGroup);
 
-          // Corredor 2: Autopista Sur (Puente Aranda -> Bosa -> Soacha)
           const corridorSurOptimal = [
             [4.6260, -74.1130],
             [4.6120, -74.1550]
           ];
-          L.polyline(corridorSurOptimal, { color: '#10b981', weight: 4.5, opacity: 0.9 })
+          L.polyline(corridorSurOptimal, { color: '#10b981', weight: 4.5, opacity: 0.95 })
             .bindPopup('<strong>Corredor Autopista Sur (Tramo Norte)</strong><br/>Cobertura 5G estable.')
             .addTo(corridorsLayerGroup);
 
@@ -576,7 +686,6 @@
             .addTo(corridorsLayerGroup);
         }
 
-        // C) Dibujar Puntos Ciegos SLA (si no están cubiertos)
         if ((state.activeFilter === 'all' || state.activeFilter === 'blindspots') && !isGapCovered) {
           const blindspots = [
             { name: 'Corte Corredor Autopista Sur (Bosa/Soacha)', lat: 4.5930, lng: -74.1980, desc: 'RSSI -114 dBm. 18 camiones sin telemetría.' },
@@ -589,7 +698,7 @@
               weight: 2,
               dashArray: '6, 6',
               fillColor: '#f43f5e',
-              fillOpacity: 0.2
+              fillOpacity: 0.22
             })
               .bindPopup(`<strong style="color:#e11d48;">${bs.name}</strong><br/>${bs.desc}`)
               .addTo(blindspotsLayerGroup);
@@ -603,7 +712,6 @@
         const activeCells = getActiveCells();
         countBadge.textContent = `${activeCells.length} Activas`;
 
-        // Combinar todas las 20 celdas + simuladas para el buscador
         let allCatalog = [...cellsData];
         if (state.capexSimulated) allCatalog = allCatalog.concat(capexCellsData);
 
@@ -625,8 +733,8 @@
           const isOnline = cell.tier === 'base' || cell.tier === 'sim' || (cell.tier === 'pro' && state.proEnabled);
           const badgeClass = isOnline
             ? (cell.tier === 'sim' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-sky-500/20 text-sky-300')
-            : 'bg-slate-800 text-slate-400';
-          const statusText = isOnline ? 'Activa' : 'Pro (Inactiva)';
+            : 'bg-slate-800 text-amber-400 border border-amber-500/30';
+          const statusText = isOnline ? 'Activa' : 'Desbloquear Pro';
 
           return `
             <button type="button" data-cell-id="${cell.id}" data-lat="${cell.lat}" data-lng="${cell.lng}" data-online="${isOnline}"
@@ -634,7 +742,7 @@
               <div>
                 <div class="flex items-center gap-1.5">
                   <span class="text-xs font-bold font-mono text-white">${cell.id}</span>
-                  <span class="text-xs font-semibold text-slate-200 truncate max-w-[165px]">${cell.name}</span>
+                  <span class="text-xs font-semibold text-slate-200 truncate max-w-[160px]">${cell.name}</span>
                 </div>
                 <p class="text-[11px] text-slate-400">${cell.zone} • ${cell.eirp}</p>
               </div>
@@ -645,7 +753,6 @@
           `;
         }).join('');
 
-        // Evento click en cada tarjeta del inventario
         document.querySelectorAll('.node-item').forEach(btn => {
           btn.addEventListener('click', () => {
             const lat = parseFloat(btn.dataset.lat);
@@ -654,15 +761,14 @@
             const isOnline = btn.dataset.online === 'true';
 
             if (!isOnline && !state.proEnabled) {
-              // Activar Pro automáticamente si el usuario hace clic en una celda Pro inactiva
-              toggleProMode(true);
+              state.pendingCellToFocus = { id: cellId, lat, lng };
+              openCheckoutModal();
+              return;
             }
 
             map.flyTo([lat, lng], 13, { duration: 1.1 });
             setTimeout(() => {
-              if (cellMarkersMap[cellId]) {
-                cellMarkersMap[cellId].openPopup();
-              }
+              if (cellMarkersMap[cellId]) cellMarkersMap[cellId].openPopup();
             }, 600);
           });
         });
@@ -673,10 +779,8 @@
         const totalMax = state.capexSimulated ? 22 : 20;
         const isGapCovered = state.proEnabled || state.capexSimulated;
 
-        // Celdas activas
         document.getElementById('kpi-cells').textContent = `${activeCells.length} / ${totalMax}`;
 
-        // SLA y Riesgo
         const slaEl = document.getElementById('kpi-sla');
         const slaBadge = document.getElementById('kpi-sla-badge');
         const riskEl = document.getElementById('kpi-risk');
@@ -724,7 +828,6 @@
           `;
         }
 
-        // Tráfico agregado
         const totalThroughput = activeCells.reduce((acc, c) => acc + c.throughput, 0);
         document.getElementById('traffic-now').textContent = `${totalThroughput.toLocaleString()} Mbps`;
 
@@ -742,20 +845,46 @@
       }
 
       // ==========================================
-      // 5. EVENTOS DE INTERACCIÓN DE USUARIO
+      // 5. CHECKOUT B2B SIMULADO & ACTIVACIÓN PRO
       // ==========================================
+      const checkoutModal = document.getElementById('pro-checkout-modal');
 
-      // Botón Activar / Desactivar Red Pro
-      function toggleProMode(forceState) {
-        state.proEnabled = typeof forceState === 'boolean' ? forceState : !state.proEnabled;
+      function openCheckoutModal() {
+        checkoutModal.classList.remove('hidden');
+        checkoutModal.classList.add('flex');
+      }
+
+      function closeCheckoutModal() {
+        checkoutModal.classList.add('hidden');
+        checkoutModal.classList.remove('flex');
+      }
+
+      function setProState(enabled) {
+        state.proEnabled = enabled;
         const btn = document.getElementById('btn-toggle-pro');
         const txt = document.getElementById('pro-btn-text');
+        const subBadge = document.getElementById('subscriber-badge');
 
         if (state.proEnabled) {
           btn.className = 'px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition cursor-pointer flex items-center gap-2';
-          txt.textContent = 'Red Pro Activa (20 Celdas)';
-          map.flyTo([4.6750, -74.1250], 10, { duration: 1.1 });
+          txt.textContent = 'Red Pro Activa (Desactivar)';
+          if (state.subscriber) {
+            subBadge.textContent = `Licencia Pro: ${state.subscriber.company}`;
+            subBadge.classList.remove('hidden');
+          }
+          if (state.pendingCellToFocus) {
+            const target = state.pendingCellToFocus;
+            state.pendingCellToFocus = null;
+            map.flyTo([target.lat, target.lng], 13, { duration: 1.1 });
+            setTimeout(() => {
+              if (cellMarkersMap[target.id]) cellMarkersMap[target.id].openPopup();
+            }, 600);
+          } else {
+            map.flyTo([4.6750, -74.1250], 10, { duration: 1.1 });
+          }
         } else {
+          state.subscriber = null;
+          subBadge.classList.add('hidden');
           btn.className = 'px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 shadow-lg shadow-amber-500/20 transition cursor-pointer flex items-center gap-2';
           txt.textContent = 'Activar Red Pro (20 Celdas)';
           map.flyTo([4.6450, -74.1150], 11, { duration: 1.1 });
@@ -763,9 +892,44 @@
         refreshAll();
       }
 
-      document.getElementById('btn-toggle-pro').addEventListener('click', () => toggleProMode());
+      document.getElementById('btn-toggle-pro').addEventListener('click', () => {
+        if (state.proEnabled) {
+          setProState(false);
+        } else {
+          openCheckoutModal();
+        }
+      });
 
-      // Botón Simulador CAPEX
+      document.getElementById('btn-close-checkout').addEventListener('click', closeCheckoutModal);
+      document.getElementById('btn-cancel-checkout').addEventListener('click', closeCheckoutModal);
+
+      // Autorrellenar datos de prueba en el checkout
+      document.getElementById('btn-autofill-demo').addEventListener('click', () => {
+        document.getElementById('chk-name').value = 'Ing. Carlos Andrés Mendoza';
+        document.getElementById('chk-company').value = 'Transportes & Logística Sabana S.A.S.';
+        document.getElementById('chk-email').value = 'cmendoza@logisticasabana.com.co';
+        document.getElementById('chk-phone').value = '+57 315 842 9910';
+        document.getElementById('chk-card').value = '4532 8910 4421 8842';
+        document.getElementById('chk-exp').value = '09/29';
+        document.getElementById('chk-cvv').value = '842';
+      });
+
+      document.getElementById('pro-checkout-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        state.subscriber = {
+          name: document.getElementById('chk-name').value.trim(),
+          company: document.getElementById('chk-company').value.trim(),
+          email: document.getElementById('chk-email').value.trim(),
+          phone: document.getElementById('chk-phone').value.trim(),
+          cardLast4: document.getElementById('chk-card').value.trim().slice(-4)
+        };
+        closeCheckoutModal();
+        setProState(true);
+      });
+
+      // ==========================================
+      // 6. SIMULADOR CAPEX, FILTROS Y BUSCADOR
+      // ==========================================
       document.getElementById('btn-simulate-capex').addEventListener('click', () => {
         state.capexSimulated = !state.capexSimulated;
         const btnText = document.getElementById('sim-btn-text');
@@ -787,7 +951,6 @@
         refreshAll();
       });
 
-      // Filtros de Capas de Cobertura
       document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           document.querySelectorAll('.filter-btn').forEach(b => {
@@ -799,7 +962,6 @@
         });
       });
 
-      // Buscador del Inventario (Enter + Botón Ir + Limpiar)
       const searchForm = document.getElementById('node-search-form');
       const searchInput = document.getElementById('node-search-input');
 
@@ -822,24 +984,46 @@
         renderInventory();
       });
 
-      // Modal Informe QoS (PDF)
+      // ==========================================
+      // 7. INFORME QOS AMPLIADO Y MEMBRETEADO
+      // ==========================================
       const reportModal = document.getElementById('report-modal');
       document.getElementById('btn-export-report').addEventListener('click', () => {
         const activeCells = getActiveCells();
-        document.getElementById('rep-date').textContent = 'Fecha: ' + new Date().toLocaleString('es-CO');
+        const totalThroughput = activeCells.reduce((acc, c) => acc + c.throughput, 0);
+        const avgLatency = (activeCells.reduce((acc, c) => acc + c.latency, 0) / activeCells.length).toFixed(2);
+        const isGapCovered = state.proEnabled || state.capexSimulated;
+
+        document.getElementById('rep-date').textContent = 'Emisión: ' + new Date().toLocaleString('es-CO');
+        document.getElementById('rep-client').textContent = state.subscriber
+          ? `Suscriptor: ${state.subscriber.company} (Tarjeta •••• ${state.subscriber.cardLast4})`
+          : 'Suscriptor: Evaluación Corporativa (Nivel Base)';
+
         document.getElementById('rep-sla').textContent = document.getElementById('kpi-sla').textContent;
         document.getElementById('rep-cells').textContent = document.getElementById('kpi-cells').textContent;
-        document.getElementById('rep-latency').textContent = document.getElementById('kpi-latency').textContent;
+        document.getElementById('rep-latency').textContent = `${avgLatency} ms`;
         document.getElementById('rep-risk').textContent = document.getElementById('kpi-risk').textContent;
+
+        // Análisis técnico dinámico según estado de red
+        document.getElementById('rep-deep-analysis').innerHTML = `
+          <p><strong>• Capacidad Agregada y Densidad Espectral:</strong> La topología actualmente evaluada integra <strong>${activeCells.length} macro-celdas operativas</strong> en banda media 5G NR (3.5 GHz n78), alcanzando un throughput agregado de <strong>${totalThroughput.toLocaleString()} Mbps (${(totalThroughput / 1000).toFixed(2)} Gbps)</strong> con una latencia media extremo a extremo de <strong>${avgLatency} ms</strong>, cumpliendo los umbrales internacionales para telemetría industrial IoT y seguimiento vehicular en tiempo real.</p>
+          <p><strong>• Análisis de Propagación EIRP y Continuidad Geoespacial:</strong> Mediante el modelado de Potencia Radiada Isotrópica Equivalente (entre 61 dBm y 65 dBm), cada nodo sostiene un radio efectivo de cobertura entre 2.9 km y 3.8 km. ${isGapCovered
+            ? 'Con la topología extendida activa, se logra un solapamiento celular continuo desde Chía hasta Soacha y desde Mosquera hasta los Cerros Orientales, eliminando las zonas de sombra orográfica en Ciudad Bolívar y el corredor Autopista Sur.'
+            : 'Bajo la configuración base de 5 celdas centrales, se detectan dos brechas críticas de propagación (RSSI < -114 dBm) sobre el eje Bosa–Soacha y la zona alta de Ciudad Bolívar, generando interrupciones de paquete en flotas de carga.'}</p>
+          <p><strong>• Evaluación Financiera y Recomendación B2B:</strong> ${isGapCovered
+            ? 'La mitigación total de puntos ciegos reduce la exposición operativa por pérdida de trazabilidad a $0 USD/hora, protegiendo cadenas de frío y cumplimiento de entregas SLA con un retorno de inversión proyectado inferior a 3 meses.'
+            : 'La exposición financiera actual asciende a $2,150 USD/hora por desconexión telemétrica de 18 unidades de carga. Se recomienda activar la licencia Enterprise Pro (20 nodos) o ejecutar el despliegue CAPEX en el sector sur-occidental.'}</p>
+        `;
 
         document.getElementById('rep-table-body').innerHTML = activeCells.map(c => `
           <tr>
-            <td class="p-2.5 font-mono font-bold">${c.id}</td>
-            <td class="p-2.5">${c.name} (${c.zone})</td>
-            <td class="p-2.5 uppercase font-semibold">${c.tier}</td>
-            <td class="p-2.5">${c.eirp}</td>
-            <td class="p-2.5">${(c.radius/1000).toFixed(1)} km</td>
-            <td class="p-2.5 font-mono">${c.throughput} Mbps</td>
+            <td class="p-2.5 font-mono font-bold text-slate-900">${c.id}</td>
+            <td class="p-2.5">${c.name} <span class="text-slate-500">(${c.zone})</span></td>
+            <td class="p-2.5 uppercase font-bold text-[10px]">${c.tier}</td>
+            <td class="p-2.5 font-mono">${c.eirp}</td>
+            <td class="p-2.5 font-mono">${(c.radius/1000).toFixed(1)} km</td>
+            <td class="p-2.5 font-mono">${c.latency} ms</td>
+            <td class="p-2.5 font-mono font-semibold">${c.throughput} Mbps</td>
           </tr>
         `).join('');
 
@@ -856,7 +1040,6 @@
         window.print();
       });
 
-      // Telemetría viva de latencia cada 3 segundos
       setInterval(() => {
         const baseLat = state.proEnabled ? 11.8 : 14.2;
         const jitter = (Math.random() * 0.8 - 0.4).toFixed(1);
@@ -864,7 +1047,6 @@
         document.getElementById('kpi-latency').textContent = `${currentLat} ms`;
       }, 3000);
 
-      // Render inicial
       refreshAll();
     });
   </script>
