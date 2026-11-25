@@ -61,3 +61,4 @@ jobs:
           app_location: "/cellpulse-5g/frontend"
           api_location: ""
           output_location: ""
+          skip_app_build: true
