@@ -1,39 +1,59 @@
-# CellPulse 5G - High-Precision Cellular Coverage Analytics Platform
+# CellPulse 5G — Enterprise NOC & Inteligencia Geoespacial 5G NR
 
-> **Live Demo:** [https://proud-field-073a24510.4.azurestaticapps.net](https://proud-field-073a24510.4.azurestaticapps.net)
+![Cloud Native](https://img.shields.io/badge/Architecture-Cloud--Native%20CNCF-0284c7?style=for-the-badge&logo=kubernetes&logoColor=white)
+![FastAPI](https://img.shields.io/badge/Backend-FastAPI%20Python%203.11-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![Azure](https://img.shields.io/badge/Deploy-Azure%20Static%20Web%20Apps-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
+![Docker](https://img.shields.io/badge/Containers-Docker%20%26%20Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![CI/CD](https://img.shields.io/badge/CI%2FCD-GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
 
-## 1. Executive Summary & Business Case Modelo de Negocio
-**CellPulse 5G** es una plataforma nativa de la nube (*Cloud-Native*) diseñada para la recolección, procesamiento y visualización en tiempo real de cobertura de redes móviles (4G/5G) y torres celulares.
+**CellPulse 5G** es una plataforma B2B SaaS de grado empresarial diseñada para el monitoreo geoespacial, auditoría de Calidad de Servicio (**QoS / SLA**) y simulación de inversiones (**CAPEX What-If**) en redes **5G NR (Banda Media 3.5 GHz n78)** sobre el área metropolitana de **Bogotá D.C. y la Sabana de Occidente/Norte**.
 
-A diferencia de portales puramente informativos, **CellPulse 5G** opera bajo un modelo de negocio SaaS (Software as a Service) monetizable mediante:
-- **API B2B para Operadores de Telecomunicaciones:** Venta de telemetría crowdsourced sobre puntos ciegos y calidad de red (QoS) para optimizar inversiones en infraestructura.
-- **Servicios de Mapas para Empresas de IoT y Logística:** Garantía de conectividad continua en rutas críticas de transporte.
-- **Acceso Freemium/Pro:** Herramientas avanzadas de auditoría de red para usuarios corporativos.
-
----
-
-## 2. Cloud-Native Reference Architecture (Azure & CNCF Principles)
-El sistema ha sido diseñado aplicando las directrices de la **Cloud Native Computing Foundation (CNCF)**, garantizando un entorno agnóstico, escalable y altamente disponible sobre **Microsoft Azure**.
-
-- **Microservices Design:**
-  - `Frontend-Service`: Interfaz interactiva de mapas basada en Leaflet.js.
-  - `Telemetry-Ingest-Service`: Servicio de recepción masiva de lecturas de señal de antenas.
-  - `Spatial-Analytics-Service`: Procesamiento y renderizado de coordenadas geoespaciales.
-- **Serverless Computing:** Implementación de **Azure Functions** para la ingesta de telemetría bajo demanda, reduciendo costos operativos al procesar millones de eventos por segundo solo cuando ocurren.
-- **Containerization & Orchestration:** Empaquetamiento de servicios mediante **Docker** y definición de manifiestos de **Kubernetes** para escalado horizontal automático (HPA) y tolerancia a fallos.
-- **DevOps & CI/CD Pipeline:** Automatización continua de compilación, pruebas y despliegue usando **GitHub Actions**.
+ **Aplicación en Producción (Azure):** [https://proud-field-073a24510.4.azurestaticapps.net](https://proud-field-073a24510.4.azurestaticapps.net)
 
 ---
 
-## 3. Estructura del Repositorio
+## Características Principales
+
+* **Topología Geoespacial Metropolitana (20 Macro-Celdas gNodeB + 2 Nodos CAPEX):** Visualización interactiva mediante **Leaflet** y capas duales de **Esri ArcGIS** (*Vista NOC Oscura* y *Calles & Vías*), con radios de cobertura realistas (2.9 km – 3.8 km) y solapamiento controlado (*Zero-Interruption Handover*).
+* **Telemetría RF Detallada por Antena:** Inspección en vivo por nodo con mediciones de **EIRP** (61–65 dBm), **RSRP** (-76 a -86 dBm), **SINR** (17.2–25.0 dB), **Latencia E2E** (ms) y **Throughput** (Mbps), acompañada de gráficas dinámicas en **Chart.js** y buscador en tiempo real.
+* **Simulador de Inversión CAPEX (What-If):** Evaluación de impacto financiero y operativo mediante el despliegue virtual de estaciones base en sectores críticos (Ciudad Bolívar y Autopista Sur Bosa/Soacha), calculando el retorno de inversión (**ROI**) y la mitigación del riesgo operativo en flotas logísticas ($2,150 USD/hr $\rightarrow$ $0 USD/hr).
+* **Modelo Comercial B2B & Auditoría Ejecutiva PDF:** Flujo de suscripción corporativa para desbloqueo de la red metropolitana (*Enterprise Pro*) y generador de **Informes Ejecutivos QoS** membreteados con matriz completa de mediciones por estación base.
+* **Backend Cloud-Native de Alto Rendimiento:** Microservicio en **FastAPI** con motor físico de propagación en espacio libre (**FSPL 3GPP n78**), transmisión en tiempo real vía **WebSockets**, caché distribuida en **Redis (< 5 ms)** y soporte geoespacial con **PostgreSQL + PostGIS**.
+
+---
+
+## Arquitectura Cloud-Native (5 Capas)
+
 ```text
-├── .github/
-│   └── workflows/
-│       └── deploy.yml          # Pipeline de CI/CD para GitHub Actions
-├── frontend/
-│   ├── index.html              # Aplicación Web / Mapa Interactivo
-│   └── Dockerfile              # Contenedor Nginx para el Frontend
-├── k8s/
-│   ├── deployment.yaml         # Configuración de Deployments y Pods en Kubernetes
-│   └── service.yaml            # Configuración de LoadBalancer y Networking
-├── README.md                   # Documentación principal del caso de negocio
++-----------------------------------------------------------------------------------+
+|                        CAPA 1: PRESENTACIÓN & TELEMETRÍA UI                       |
+|   Azure Static Web Apps (CDN Global) | HTML5 + TailwindCSS + Leaflet (Esri GIS)   |
+|   Chart.js (Tráfico en Vivo) | Simulador CAPEX | Generador PDF QoS Membreteado    |
++-----------------------------------------+-----------------------------------------+
+                                          | HTTPS (REST API) / WSS (WebSockets)
+                                          v
++-----------------------------------------------------------------------------------+
+|                    CAPA 2: ORQUESTACIÓN & AUTOESCALADO (K8S)                      |
+|   Kubernetes Cluster (Namespace: cellpulse-5g) | LoadBalancer Service             |
+|   Horizontal Pod Autoscaler (HPA: Min 2 - Max 6 Pods @ 70% CPU) | Liveness Probes |
++-----------------------------------------+-----------------------------------------+
+                                          |
+                                          v
++-----------------------------------------------------------------------------------+
+|                   CAPA 3: LÓGICA DE NEGOCIO & MOTOR RF (BACKEND)                  |
+|   FastAPI (Python 3.11 / Uvicorn ASGI) | Documentación OpenAPI Swagger (/docs)    |
+|   Motor Físico 3GPP n78 (Cálculo FSPL, EIRP, RSRP, SINR) | Gestión Suscripciones  |
++-----------------------+-----------------------------------+-----------------------+
+                        |                                   |
+                        v                                   v
++---------------------------------------+   +---------------------------------------+
+|    CAPA 4A: CACHÉ DE ALTA VELOCIDAD   |   |   CAPA 4B: PERSISTENCIA GEOESPACIAL   |
+|   Redis 7 Alpine (In-Memory Store)    |   |   PostgreSQL 16 + PostGIS 3.4         |
+|   Latencia < 5 ms | TTL 30s           |   |   Almacenamiento Nodos, SLA & Rutas   |
++---------------------------------------+   +---------------------------------------+
+
++-----------------------------------------------------------------------------------+
+|                 CAPA 5: DEVOPS, CALIDAD Y DESPLIEGUE CONTINUO (CI/CD)             |
+|   GitHub Repository -> GitHub Actions Pipeline:                                   |
+|   [1. Pytest RF Suite] ---> [2. Docker Image Build] ---> [3. Azure SWA Deploy]    |
++-----------------------------------------------------------------------------------+
